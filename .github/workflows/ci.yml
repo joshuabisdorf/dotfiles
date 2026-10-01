@@ -20,7 +20,7 @@ concurrency:
 jobs:
   shell:
     name: Shell validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
 
     steps:
@@ -28,6 +28,11 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes shellcheck stow
 
       - name: Validate Bash syntax
         run: bash -n install.sh
@@ -45,3 +50,15 @@ jobs:
 
           test "$status" -eq 64
           grep -q '^Usage:' <<< "$output"
+
+      - name: Verify Stow installation behavior
+        shell: bash
+        run: |
+          mkdir -p ci-package/.config/dotfiles-ci
+          printf 'ok\n' > ci-package/.config/dotfiles-ci/test.conf
+
+          export HOME="$(mktemp -d)"
+          ./install.sh ci-package
+
+          test -e "$HOME/.config/dotfiles-ci/test.conf"
+          grep -q '^ok$' "$HOME/.config/dotfiles-ci/test.conf"
