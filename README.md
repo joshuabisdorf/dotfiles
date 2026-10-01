@@ -16,18 +16,12 @@ This repository uses [GNU Stow](https://www.gnu.org/software/stow/) to manage sy
 
 Each top-level configuration directory is a Stow package whose contents mirror their paths relative to the home directory.
 
-For example:
+Current package layout:
 
 ```text
 dotfiles/
-├── git/
-│   └── .gitconfig
-├── shell/
-│   └── .bashrc
-└── nvim/
-    └── .config/
-        └── nvim/
-            └── init.lua
+└── git/
+    └── .gitconfig
 ```
 
 Stowing the `git` package creates:
@@ -36,9 +30,34 @@ Stowing the `git` package creates:
 ~/.gitconfig -> ~/dotfiles/git/.gitconfig
 ```
 
+## Git Configuration
+
+The tracked Git configuration contains portable settings only.
+
+Machine-specific or personal Git settings belong in:
+
+```text
+~/.gitconfig.local
+```
+
+The tracked `~/.gitconfig` includes that file when present.
+
+For example:
+
+```ini
+[user]
+    name = Your Name
+    email = you@example.com
+```
+
+The current tracked Git configuration:
+
+- sets the default initial branch name to `main`;
+- includes `~/.gitconfig.local` for identity and machine-specific settings.
+
 ## Installation
 
-GNU Stow must already be installed.
+GNU Stow and Git must already be installed.
 
 Clone the repository:
 
@@ -47,17 +66,17 @@ git clone git@github.com:joshuabisdorf/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ```
 
-Install one or more packages by name:
+Install the Git package:
 
 ```sh
-./install.sh git shell
+./install.sh git
 ```
 
 The install script only operates on explicitly named packages.
 
 ## Security
 
-This repository must not contain secrets.
+Do not commit credentials, private keys, access tokens, or other secrets.
 
 Examples of files and values that should remain outside version control include:
 
@@ -68,12 +87,9 @@ Examples of files and values that should remain outside version control include:
 - machine-specific secrets
 - authentication cookies or sessions
 - private certificates
+- personal Git identity stored in `~/.gitconfig.local`
 
-Machine-specific or sensitive configuration should be stored separately and referenced by the tracked configuration where appropriate.
-
-## Security
-
-Do not commit credentials, private keys, access tokens, or other secrets.
+Machine-specific or sensitive configuration should be stored separately and referenced by tracked configuration where appropriate.
 
 See [`.github/SECURITY.md`](.github/SECURITY.md) for vulnerability reporting guidance.
 
