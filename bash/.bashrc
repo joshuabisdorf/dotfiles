@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+# shellcheck disable=SC1091
 # ~/.bashrc: portable interactive Bash configuration.
 
 # Stop here for non-interactive shells.
