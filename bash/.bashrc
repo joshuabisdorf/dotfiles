@@ -60,6 +60,7 @@ __dotfiles_git_context() {
 }
 
 # Keep the prompt familiar while adding restrained color and Git context.
+# shellcheck disable=SC2016
 if [[ -t 1 ]]; then
   PS1='\[\033[01;32m\]\u@\h\[\033[00m\] \[\033[01;34m\]\w\[\033[01;35m\]$(__dotfiles_git_context)\[\033[00m\] \$ '
 else
