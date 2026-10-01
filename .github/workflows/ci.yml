@@ -31,16 +31,32 @@ jobs:
       - name: Install test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --yes shellcheck stow
+          sudo apt-get install --yes shellcheck stow vim
 
       - name: Validate Bash syntax
-        run: bash -n install.sh
+        run: |
+          bash -n install.sh
+          bash -n bash/.bashrc
+          bash -n vscode/install-extensions.sh
 
       - name: Run ShellCheck
-        run: shellcheck install.sh
+        run: |
+          shellcheck install.sh
+          shellcheck bash/.bashrc
+          shellcheck vscode/install-extensions.sh
 
       - name: Validate Git configuration
-        run: git config --file git/.gitconfig --list >/dev/null
+        run: |
+          git config --file git/.gitconfig --list >/dev/null
+          test "$(git config --file git/.gitconfig --get init.defaultBranch)" = "main"
+          test "$(git config --file git/.gitconfig --get pull.rebase)" = "true"
+          git config --file git/.gitconfig --get alias.lg >/dev/null
+
+      - name: Validate Vim configuration
+        run: vim -Nu vim/.vimrc -n -es +'qa!'
+
+      - name: Validate VS Code settings
+        run: python3 -m json.tool vscode/settings.json >/dev/null
 
       - name: Verify no-argument behavior
         shell: bash
@@ -53,11 +69,38 @@ jobs:
           test "$status" -eq 64
           grep -q '^Usage:' <<< "$output"
 
-      - name: Verify Git package installation
+      - name: Reject unmanaged packages
+        shell: bash
+        run: |
+          set +e
+          output="$(./install.sh vscode 2>&1)"
+          status=$?
+          set -e
+
+          test "$status" -eq 66
+          grep -q 'unmanaged or invalid package' <<< "$output"
+
+      - name: Verify all Stow packages
         shell: bash
         run: |
           export HOME="$(mktemp -d)"
-          ./install.sh git
+          ./install.sh --all
 
           test -L "$HOME/.gitconfig"
+          test -L "$HOME/.bashrc"
+          test -L "$HOME/.inputrc"
+          test -L "$HOME/.vimrc"
+
           test "$(git config --file "$HOME/.gitconfig" --get init.defaultBranch)" = "main"
+          test "$(git config --file "$HOME/.gitconfig" --get pull.rebase)" = "true"
+
+      - name: Verify Bash defaults
+        shell: bash
+        run: |
+          export HOME="$(mktemp -d)"
+          stow --dir="$GITHUB_WORKSPACE" --target="$HOME" bash readline
+          bash --noprofile --rcfile "$HOME/.bashrc" -ic '
+            test "$HISTSIZE" = "10000"
+            test "$HISTFILESIZE" = "10000"
+            [[ "$HISTCONTROL" == *erasedups* ]]
+          '

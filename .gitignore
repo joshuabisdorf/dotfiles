@@ -20,8 +20,10 @@
 **/authorized_keys
 **/config.local
 
-# Git machine-specific configuration
+# Local user overrides
 **/.gitconfig.local
+**/.bashrc.local
+**/.vimrc.local
 
 # Credentials and local secret stores
 .netrc

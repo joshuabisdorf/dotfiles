@@ -1,0 +1,5 @@
+# Microsoft C/C++ language support.
+ms-vscode.cpptools
+
+# Provides "Dark (Visual Studio - C/C++)".
+ms-vscode.cpptools-themes

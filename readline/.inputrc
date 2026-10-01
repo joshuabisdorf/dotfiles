@@ -1,0 +1,6 @@
+# Search history by the text already typed at the prompt.
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+
+# Show possible completions immediately when more than one match exists.
+set show-all-if-ambiguous on
