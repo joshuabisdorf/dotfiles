@@ -1,1 +1,4 @@
-git\nbash\nreadline\nvim\n
+git
+bash
+readline
+vim
