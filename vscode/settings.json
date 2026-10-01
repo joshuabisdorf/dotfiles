@@ -1,0 +1,16 @@
+{
+  "workbench.colorTheme": "Dark (Visual Studio - C/C++)",
+  "workbench.preferredDarkColorTheme": "Dark (Visual Studio - C/C++)",
+  "editor.detectIndentation": true,
+  "editor.insertSpaces": true,
+  "editor.tabSize": 4,
+  "editor.renderWhitespace": "selection",
+  "editor.rulers": [
+    100
+  ],
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true
+}
