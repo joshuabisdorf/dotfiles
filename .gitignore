@@ -1,4 +1,3 @@
-# Secrets and local environment files
 .env
 .env.*
 !.env.example
@@ -20,6 +19,9 @@
 **/known_hosts.old
 **/authorized_keys
 **/config.local
+
+# Git machine-specific configuration
+**/.gitconfig.local
 
 # Credentials and local secret stores
 .netrc
