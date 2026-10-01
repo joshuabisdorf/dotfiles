@@ -1,48 +1,64 @@
 # dotfiles
 
-Personal configuration files for my development environment.
+Portable user configuration for a consistent development environment across Linux, WSL, and Windows where applicable.
 
 ## Goals
 
-- Keep development configuration version-controlled.
-- Make setting up a new machine reproducible.
-- Keep configuration organized and understandable.
-- Separate portable configuration from machine-specific settings.
-- Never commit credentials, private keys, tokens, or other secrets.
+- Keep user configuration version-controlled.
+- Make several computers behave consistently without provisioning the operating system.
+- Prefer portable, understandable defaults over large frameworks.
+- Keep personal, machine-specific, and secret values outside the repository.
+- Make setup convenient enough to repeat without making it opaque.
 
-## Management
+## Managed configuration
 
-This repository uses [GNU Stow](https://www.gnu.org/software/stow/) to manage symlinks.
-
-Each top-level configuration directory is a Stow package whose contents mirror their paths relative to the home directory.
-
-Current package layout:
+GNU Stow manages Unix-style dotfiles:
 
 ```text
 dotfiles/
-└── git/
-    └── .gitconfig
+├── git/
+│   └── .gitconfig
+├── bash/
+│   └── .bashrc
+├── readline/
+│   └── .inputrc
+└── vim/
+    └── .vimrc
 ```
 
-Stowing the `git` package creates:
+The managed package list lives in `stow-packages.txt`.
+
+Install every Stow package:
+
+```sh
+./install.sh --all
+```
+
+Or install selected packages:
+
+```sh
+./install.sh git bash readline vim
+```
+
+Stow creates symlinks in the home directory. For example:
 
 ```text
 ~/.gitconfig -> ~/dotfiles/git/.gitconfig
+~/.bashrc    -> ~/dotfiles/bash/.bashrc
+~/.inputrc   -> ~/dotfiles/readline/.inputrc
+~/.vimrc     -> ~/dotfiles/vim/.vimrc
 ```
 
-## Git Configuration
+## Git
 
-The tracked Git configuration contains portable settings only.
+Portable Git defaults include:
 
-Machine-specific or personal Git settings belong in:
+- new repositories use `main`;
+- `git pull` rebases rather than creating a merge commit;
+- `git lg` shows a compact decorated commit graph;
+- `~/.gitconfig.local` is included for identity and machine-specific settings.
 
-```text
-~/.gitconfig.local
-```
-
-The tracked `~/.gitconfig` includes that file when present.
-
-For example:
+Example local identity:
 
 ```ini
 [user]
@@ -50,14 +66,76 @@ For example:
     email = you@example.com
 ```
 
-The current tracked Git configuration:
+## Bash and Readline
 
-- sets the default initial branch name to `main`;
-- includes `~/.gitconfig.local` for identity and machine-specific settings.
+The Bash configuration keeps 10,000 history entries, suppresses duplicate history, appends history instead of overwriting it, and exchanges newly entered history between concurrent interactive shells.
+
+Up and Down search backward and forward through history using the text already typed at the prompt.
+
+When Bash completion is installed by the host system, it is loaded automatically.
+
+The prompt remains close to the traditional `user@host path $` form while adding restrained color and the current Git branch or detached commit.
+
+Machine-specific interactive settings can live in `~/.bashrc.local`.
+
+## Vim
+
+Vim is configured as a lightweight CLI editor rather than an IDE.
+
+Defaults include:
+
+- line numbers;
+- four-space indentation as the baseline;
+- filetype plugins and indentation;
+- incremental, highlighted, smart-case search;
+- predictable split placement;
+- a small scroll margin.
+
+Machine-specific overrides can live in `~/.vimrc.local`.
+
+## Visual Studio Code
+
+VS Code configuration is stored separately from Stow because the user-settings location differs by platform:
+
+```text
+vscode/
+├── settings.json
+├── extensions.txt
+├── install-extensions.sh
+└── install-extensions.ps1
+```
+
+The preferred theme is `Dark (Visual Studio - C/C++)`, supplied by Microsoft's C/C++ Themes extension. If that theme is unavailable, use the built-in `Dark+` theme until the extension is installed.
+
+Install the tracked extensions on Linux/WSL/Git Bash:
+
+```sh
+bash vscode/install-extensions.sh
+```
+
+Install them from PowerShell on Windows:
+
+```powershell
+.\vscode\install-extensions.ps1
+```
+
+The canonical user settings are in `vscode/settings.json`. Apply or link that file to the platform's VS Code user-settings location as appropriate.
+
+Typical locations are:
+
+- Linux: `~/.config/Code/User/settings.json`
+- Windows: `%APPDATA%\Code\User\settings.json`
+- WSL: desktop user settings normally live on the Windows side; remote-specific settings are separate.
+
+VS Code's CLI supports installing extensions by their `publisher.extension` identifiers, which is what the extension installers use.
 
 ## Installation
 
-GNU Stow and Git must already be installed.
+Prerequisites for the Stow-managed configuration:
+
+- Git
+- Bash
+- GNU Stow
 
 Clone the repository:
 
@@ -66,30 +144,22 @@ git clone git@github.com:joshuabisdorf/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ```
 
-Install the Git package:
-
-```sh
-./install.sh git
-```
-
-The install script only operates on explicitly named packages.
+Then install the desired packages.
 
 ## Security
 
 Do not commit credentials, private keys, access tokens, or other secrets.
 
-Examples of files and values that should remain outside version control include:
+Examples of values that should remain outside version control include:
 
-- SSH private keys
-- API keys and access tokens
-- passwords and credentials
-- `.env` files containing secrets
-- machine-specific secrets
-- authentication cookies or sessions
-- private certificates
-- personal Git identity stored in `~/.gitconfig.local`
-
-Machine-specific or sensitive configuration should be stored separately and referenced by tracked configuration where appropriate.
+- SSH private keys;
+- API keys and access tokens;
+- passwords and credentials;
+- secret `.env` files;
+- authentication cookies or sessions;
+- private certificates;
+- personal Git identity in `~/.gitconfig.local`;
+- machine-specific shell settings in `~/.bashrc.local`.
 
 See [`.github/SECURITY.md`](.github/SECURITY.md) for vulnerability reporting guidance.
 
