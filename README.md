@@ -70,3 +70,15 @@ Examples of files and values that should remain outside version control include:
 - private certificates
 
 Machine-specific or sensitive configuration should be stored separately and referenced by the tracked configuration where appropriate.
+
+## Security
+
+Do not commit credentials, private keys, access tokens, or other secrets.
+
+See [`.github/SECURITY.md`](.github/SECURITY.md) for vulnerability reporting guidance.
+
+## License
+
+This repository is released under the [Zero-Clause BSD (0BSD) license](LICENSE).
+
+You may use, copy, modify, and redistribute the contents for any purpose, with or without fee. Attribution is not required.
