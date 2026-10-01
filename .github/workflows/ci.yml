@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - init
   pull_request:
     branches:
       - main
@@ -40,6 +39,9 @@ jobs:
       - name: Run ShellCheck
         run: shellcheck install.sh
 
+      - name: Validate Git configuration
+        run: git config --file git/.gitconfig --list >/dev/null
+
       - name: Verify no-argument behavior
         shell: bash
         run: |
@@ -51,14 +53,11 @@ jobs:
           test "$status" -eq 64
           grep -q '^Usage:' <<< "$output"
 
-      - name: Verify Stow installation behavior
+      - name: Verify Git package installation
         shell: bash
         run: |
-          mkdir -p ci-package/.config/dotfiles-ci
-          printf 'ok\n' > ci-package/.config/dotfiles-ci/test.conf
-
           export HOME="$(mktemp -d)"
-          ./install.sh ci-package
+          ./install.sh git
 
-          test -e "$HOME/.config/dotfiles-ci/test.conf"
-          grep -q '^ok$' "$HOME/.config/dotfiles-ci/test.conf"
+          test -L "$HOME/.gitconfig"
+          test "$(git config --file "$HOME/.gitconfig" --get init.defaultBranch)" = "main"
