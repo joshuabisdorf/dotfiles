@@ -1,0 +1,54 @@
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Private keys and certificates
+*.key
+*.pem
+*.p12
+*.pfx
+**/id_rsa
+**/id_dsa
+**/id_ecdsa
+**/id_ed25519
+**/id_xmss
+
+# SSH runtime and machine-specific files
+**/known_hosts
+**/known_hosts.old
+**/authorized_keys
+**/config.local
+
+# Credentials and local secret stores
+.netrc
+.npmrc.local
+.pypirc
+.aws/
+.azure/
+.gnupg/
+
+# OS metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Desktop.ini
+
+# Editor and temporary files
+*.swp
+*.swo
+*~
+.idea/
+
+# Logs and caches
+*.log
+.cache/
+__pycache__/
+*.py[cod]
+
+# Local backup files
+*.bak
+*.backup
+*.orig
