@@ -10,27 +10,50 @@ Personal configuration files for my development environment.
 - Separate portable configuration from machine-specific settings.
 - Never commit credentials, private keys, tokens, or other secrets.
 
-## Structure
+## Management
 
-The repository structure will evolve as configurations are added.
+This repository uses [GNU Stow](https://www.gnu.org/software/stow/) to manage symlinks.
 
-Planned areas include:
+Each top-level configuration directory is a Stow package whose contents mirror their paths relative to the home directory.
+
+For example:
 
 ```text
 dotfiles/
 ├── git/
+│   └── .gitconfig
 ├── shell/
-├── ssh/
-├── tmux/
-├── vim/
-├── nvim/
-├── scripts/
-└── install.sh
+│   └── .bashrc
+└── nvim/
+    └── .config/
+        └── nvim/
+            └── init.lua
+```
+
+Stowing the `git` package creates:
+
+```text
+~/.gitconfig -> ~/dotfiles/git/.gitconfig
 ```
 
 ## Installation
 
-Installation and bootstrap instructions will be added once the configuration-management approach is finalized.
+GNU Stow must already be installed.
+
+Clone the repository:
+
+```sh
+git clone git@github.com:joshuabisdorf/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+```
+
+Install one or more packages by name:
+
+```sh
+./install.sh git shell
+```
+
+The install script only operates on explicitly named packages.
 
 ## Security
 

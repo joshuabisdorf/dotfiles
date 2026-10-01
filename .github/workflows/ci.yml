@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - init
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shell:
+    name: Shell validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes shellcheck stow
+
+      - name: Validate Bash syntax
+        run: bash -n install.sh
+
+      - name: Run ShellCheck
+        run: shellcheck install.sh
+
+      - name: Verify no-argument behavior
+        shell: bash
+        run: |
+          set +e
+          output="$(./install.sh 2>&1)"
+          status=$?
+          set -e
+
+          test "$status" -eq 64
+          grep -q '^Usage:' <<< "$output"
+
+      - name: Verify Stow installation behavior
+        shell: bash
+        run: |
+          mkdir -p ci-package/.config/dotfiles-ci
+          printf 'ok\n' > ci-package/.config/dotfiles-ci/test.conf
+
+          export HOME="$(mktemp -d)"
+          ./install.sh ci-package
+
+          test -e "$HOME/.config/dotfiles-ci/test.conf"
+          grep -q '^ok$' "$HOME/.config/dotfiles-ci/test.conf"
