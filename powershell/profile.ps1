@@ -76,14 +76,14 @@ function Get-DotfilesGitContext {
     $branch = git -C $location.Path symbolic-ref --quiet --short HEAD 2>$null |
         Select-Object -First 1
 
-    if ($LASTEXITCODE -eq 0 -and $branch) {
+    if ($branch) {
         return " ($branch)"
     }
 
     $commit = git -C $location.Path rev-parse --short HEAD 2>$null |
         Select-Object -First 1
 
-    if ($LASTEXITCODE -eq 0 -and $commit) {
+    if ($commit) {
         return " (@$commit)"
     }
 
