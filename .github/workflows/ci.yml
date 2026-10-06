@@ -259,7 +259,8 @@ jobs:
             Pop-Location
           }
 
-          if ($gitPromptText -notlike "* (prompt-test) > *") {
+          $plainGitPromptText = $gitPromptText -replace "\x1b\[[0-9;]*m", ""
+          if ($plainGitPromptText -notlike "* (prompt-test) > *") {
             throw "PowerShell prompt must show the Git branch on the first prompt in a repository."
           }
 
