@@ -243,13 +243,13 @@ jobs:
           New-Item -ItemType Directory -Path (Join-Path $promptRepo ".git\objects") -Force | Out-Null
           New-Item -ItemType Directory -Path (Join-Path $promptRepo ".git\refs\heads") -Force | Out-Null
           Set-Content -LiteralPath (Join-Path $promptRepo ".git\HEAD") -Value "ref: refs/heads/prompt-test"
-          Set-Content -LiteralPath (Join-Path $promptRepo ".git\config") -Value @"
-[core]
-    repositoryformatversion = 0
-    filemode = false
-    bare = false
-    logallrefupdates = true
-"@
+          Set-Content -LiteralPath (Join-Path $promptRepo ".git\config") -Value @(
+            "[core]",
+            "    repositoryformatversion = 0",
+            "    filemode = false",
+            "    bare = false",
+            "    logallrefupdates = true"
+          )
 
           Push-Location $promptRepo
           try {
