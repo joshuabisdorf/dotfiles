@@ -217,8 +217,25 @@ jobs:
           Get-Content -Raw vscode/settings.json | ConvertFrom-Json | Out-Null
 
           $terminal = Get-Content -Raw windows-terminal/settings.json | ConvertFrom-Json
-          if ($terminal.defaultProfile -ne "PowerShell") {
-            throw "Windows Terminal default profile must be PowerShell."
+          $powerShellGuid = "{574e775e-4f2a-5b96-ac1e-a2962a402336}"
+
+          if ($terminal.defaultProfile -ne $powerShellGuid) {
+            throw "Windows Terminal default profile must be the PowerShell 7 profile GUID."
+          }
+
+          $powerShellProfile = @(
+            $terminal.profiles.list |
+              Where-Object { $_.guid -eq $powerShellGuid }
+          )
+
+          if ($powerShellProfile.Count -ne 1) {
+            throw "Windows Terminal must define exactly one PowerShell 7 profile."
+          }
+          if ($powerShellProfile[0].hidden -ne $false) {
+            throw "Windows Terminal PowerShell 7 profile must be visible."
+          }
+          if ($powerShellProfile[0].source -ne "Windows.Terminal.PowershellCore") {
+            throw "Windows Terminal PowerShell 7 profile must use the PowerShell Core dynamic source."
           }
           if ($terminal.profiles.defaults.font.face -ne "Cascadia Mono") {
             throw "Windows Terminal font must be Cascadia Mono."
