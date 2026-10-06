@@ -211,6 +211,25 @@ jobs:
             throw "PSReadLine variable color must be configured."
           }
 
+          Push-Location $HOME
+          try {
+            $promptText = prompt
+          }
+          finally {
+            Pop-Location
+          }
+
+          $identity = "$([Environment]::UserName)@$([Environment]::MachineName)"
+          if ($promptText -notlike "*$identity*") {
+            throw "PowerShell prompt must include user@host."
+          }
+          if ($promptText -notlike "*~*") {
+            throw "PowerShell prompt must shorten HOME to ~."
+          }
+          if (-not $promptText.EndsWith(" > ")) {
+            throw "PowerShell prompt must end with >."
+          }
+
       - name: Validate JSON settings
         shell: pwsh
         run: |

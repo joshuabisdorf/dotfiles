@@ -238,6 +238,14 @@ PowerShell file listings use conventional terminal distinctions:
 - common archive formats are red;
 - ordinary files keep the terminal's default foreground color.
 
+The PowerShell prompt mirrors the Bash prompt style:
+
+```text
+user@host ~/path (branch) >
+```
+
+The user/host portion is bright green, the path is bright blue, Git context is bright magenta, home is shortened to `~`, and detached HEADs display as `(@commit)`.
+
 Machine-specific PowerShell configuration can live in `profile.local.ps1` beside the Current User/All Hosts profile.
 
 Native Windows setup requires PowerShell 7 rather than Windows PowerShell 5.1.
