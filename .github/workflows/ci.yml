@@ -222,8 +222,46 @@ jobs:
               Where-Object { $_.Key -eq "Tab" }
           )
 
-          if ($tabHandler.Count -ne 1 -or $tabHandler[0].Function -ne "Complete") {
-            throw "Tab must use Bash-like Complete behavior."
+          if ($tabHandler.Count -ne 1) {
+            throw "Tab must have exactly one PSReadLine handler."
+          }
+          if ($tabHandler[0].Function -ne "BashLikeDirectoryComplete") {
+            throw "Tab must use the custom Bash-like directory completion handler."
+          }
+
+          $completionRoot = Join-Path $env:RUNNER_TEMP "completion-root"
+          New-Item -ItemType Directory -Path $completionRoot -Force | Out-Null
+          foreach ($name in @("Desktop", "Documents", "Downloads", "dotfiles")) {
+            New-Item -ItemType Directory -Path (Join-Path $completionRoot $name) -Force | Out-Null
+          }
+
+          Push-Location $completionRoot
+          try {
+            foreach ($case in @(
+              @{ Input = "cd d"; Expected = "dotfiles\" },
+              @{ Input = "cd do"; Expected = "dotfiles\" },
+              @{ Input = "cd dot"; Expected = "dotfiles\" }
+            )) {
+              $completion = Get-DotfilesDirectoryCompletion -Line $case.Input -Cursor $case.Input.Length
+
+              if (-not $completion.Handled) {
+                throw "Directory completion did not handle: $($case.Input)"
+              }
+              if ($completion.Text -ne $case.Expected) {
+                throw "Unexpected completion for '$($case.Input)': '$($completion.Text)'"
+              }
+              if ($completion.Text.StartsWith(".\")) {
+                throw "Directory completion must not add an unnecessary .\ prefix."
+              }
+            }
+
+            $uppercase = Get-DotfilesDirectoryCompletion -Line "cd D" -Cursor 4
+            if (-not $uppercase.Handled -or $null -ne $uppercase.Text) {
+              throw "Case-sensitive completion must not choose among Desktop/Documents/Downloads."
+            }
+          }
+          finally {
+            Pop-Location
           }
 
           $promptRepo = Join-Path $env:RUNNER_TEMP "prompt-repo"

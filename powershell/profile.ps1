@@ -1,5 +1,121 @@
 # Portable PowerShell defaults shared across hosts.
 
+# Get-DotfilesDirectoryCompletion
+# Requires:
+#   - A filesystem location.
+# Modifies:
+#   - Nothing.
+# Effects:
+#   - Computes Bash-like, case-sensitive directory completion for cd/Set-Location.
+# Inputs:
+#   - The current command line and cursor position.
+# Outputs:
+#   - An object describing whether completion was handled and any replacement text.
+function Get-DotfilesDirectoryCompletion {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Line,
+
+        [Parameter(Mandatory)]
+        [int]$Cursor
+    )
+
+    $notHandled = [pscustomobject]@{
+        Handled = $false
+        Start = 0
+        Length = 0
+        Text = $null
+    }
+
+    if ($Cursor -ne $Line.Length) {
+        return $notHandled
+    }
+
+    $match = [regex]::Match(
+        $Line,
+        '^\s*(?:cd|Set-Location|sl)\s+(?<path>[^\s"'';|&]+)$',
+        [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+    )
+
+    if (-not $match.Success) {
+        return $notHandled
+    }
+
+    $typedPath = $match.Groups["path"].Value
+    if (
+        [string]::IsNullOrEmpty($typedPath) -or
+        $typedPath.Contains("\") -or
+        $typedPath.Contains("/") -or
+        $typedPath.Contains(":")
+    ) {
+        return $notHandled
+    }
+
+    $location = Get-Location
+    if ($location.Provider.Name -ne "FileSystem") {
+        return $notHandled
+    }
+
+    $matches = @(
+        Get-ChildItem -LiteralPath $location.Path -Directory -Force -ErrorAction SilentlyContinue |
+            Where-Object {
+                $_.Name.StartsWith(
+                    $typedPath,
+                    [System.StringComparison]::Ordinal
+                )
+            } |
+            Sort-Object Name
+    )
+
+    if ($matches.Count -eq 0) {
+        return [pscustomobject]@{
+            Handled = $true
+            Start = $match.Groups["path"].Index
+            Length = $typedPath.Length
+            Text = $null
+        }
+    }
+
+    if ($matches.Count -eq 1) {
+        $replacement = $matches[0].Name +
+            [System.IO.Path]::DirectorySeparatorChar
+
+        return [pscustomobject]@{
+            Handled = $true
+            Start = $match.Groups["path"].Index
+            Length = $typedPath.Length
+            Text = $replacement
+        }
+    }
+
+    $commonPrefix = $matches[0].Name
+    foreach ($item in $matches | Select-Object -Skip 1) {
+        $maxLength = [Math]::Min($commonPrefix.Length, $item.Name.Length)
+        $prefixLength = 0
+
+        while (
+            $prefixLength -lt $maxLength -and
+            $commonPrefix[$prefixLength] -ceq $item.Name[$prefixLength]
+        ) {
+            $prefixLength++
+        }
+
+        $commonPrefix = $commonPrefix.Substring(0, $prefixLength)
+    }
+
+    $replacement = $null
+    if ($commonPrefix.Length -gt $typedPath.Length) {
+        $replacement = $commonPrefix
+    }
+
+    return [pscustomobject]@{
+        Handled = $true
+        Start = $match.Groups["path"].Index
+        Length = $typedPath.Length
+        Text = $replacement
+    }
+}
+
 $psReadLine = Get-Module -Name PSReadLine -ListAvailable |
     Sort-Object Version -Descending |
     Select-Object -First 1
@@ -27,7 +143,33 @@ if ($psReadLine) {
         InlinePrediction = "DarkGray"
     }
 
-    Set-PSReadLineKeyHandler -Key Tab -Function Complete
+    Set-PSReadLineKeyHandler -Key Tab -BriefDescription "BashLikeDirectoryComplete" -Description "Case-sensitive cd completion; otherwise use normal PowerShell completion." -ScriptBlock {
+        param($key, $arg)
+
+        $line = $null
+        [int]$cursor = 0
+        [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState(
+            [ref]$line,
+            [ref]$cursor
+        )
+
+        $completion = Get-DotfilesDirectoryCompletion -Line $line -Cursor $cursor
+
+        if ($completion.Handled) {
+            if ($null -ne $completion.Text) {
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(
+                    $completion.Start,
+                    $completion.Length,
+                    $completion.Text
+                )
+            }
+
+            return
+        }
+
+        [Microsoft.PowerShell.PSConsoleReadLine]::Complete($key, $arg)
+    }
+
     Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
     Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
 }
