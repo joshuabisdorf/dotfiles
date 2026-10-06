@@ -10,12 +10,12 @@ set showcmd
 set wildmenu
 set backspace=indent,eol,start
 
-" Four spaces are the baseline; filetype indentation may override specifics.
+" Two spaces are the baseline; filetype indentation may override specifics.
 set autoindent
 set expandtab
-set tabstop=4
-set shiftwidth=4
-set softtabstop=4
+set tabstop=2
+set shiftwidth=2
+set softtabstop=2
 
 " Friendly incremental search.
 set ignorecase

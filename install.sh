@@ -13,7 +13,7 @@ set -euo pipefail
 # Outputs:
 #   - Usage text on standard output.
 usage() {
-  printf 'Usage: %s --all | <package> [package ...]\n' "$0"
+  printf 'Usage: %s [--dry-run] [--uninstall] (--all | <package> [package ...])\n' "$0"
 }
 
 # package_is_managed
@@ -47,22 +47,47 @@ package_is_managed() {
 #   - GNU Stow is installed and available on PATH.
 #   - The requested package is an existing managed Stow package.
 # Modifies:
-#   - Symlinks beneath the target home directory.
+#   - Symlinks beneath the target home directory unless dry-run is enabled.
 # Effects:
-#   - Restows one package into the target home directory.
+#   - Restows or removes one package, optionally simulating the operation.
 # Inputs:
 #   - $1: repository directory.
 #   - $2: target home directory.
 #   - $3: package name.
+#   - $4: action: restow or delete.
+#   - $5: dry-run flag: true or false.
 # Outputs:
-#   - A status message on standard output.
+#   - A status message on standard output and GNU Stow simulation output when applicable.
 stow_package() {
   local repo_dir="$1"
   local target_home="$2"
   local package="$3"
+  local action="$4"
+  local dry_run="$5"
+  local suffix=''
 
-  printf 'Stowing %s...\n' "$package"
-  stow --dir="$repo_dir" --target="$target_home" --restow "$package"
+  if [[ "$dry_run" == "true" ]]; then
+    suffix=' (dry run)'
+  fi
+
+  local -a args=(
+    "--dir=$repo_dir"
+    "--target=$target_home"
+  )
+
+  if [[ "$action" == "delete" ]]; then
+    printf 'Unstowing %s%s...\n' "$package" "$suffix"
+    args+=(--delete)
+  else
+    printf 'Stowing %s%s...\n' "$package" "$suffix"
+    args+=(--restow)
+  fi
+
+  if [[ "$dry_run" == "true" ]]; then
+    args+=(--simulate)
+  fi
+
+  stow "${args[@]}" "$package"
 }
 
 # main
@@ -70,11 +95,13 @@ stow_package() {
 #   - GNU Stow is installed and available on PATH.
 #   - stow-packages.txt exists beside this script.
 # Modifies:
-#   - Symlinks beneath the current user's home directory.
+#   - Symlinks beneath the current user's home directory unless dry-run is enabled.
 # Effects:
-#   - Restows either all managed packages or explicitly requested packages.
+#   - Restows or removes all managed packages or explicitly requested packages.
 # Inputs:
-#   - --all, or one or more managed package names as positional arguments.
+#   - Optional --dry-run.
+#   - Optional --uninstall or --delete.
+#   - --all, or one or more managed package names.
 # Outputs:
 #   - Status or error messages on standard output/standard error.
 main() {
@@ -97,18 +124,58 @@ main() {
     exit 66
   fi
 
+  local dry_run=false
+  local action=restow
+  local install_all=false
+  local -a requested_packages=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --dry-run)
+        dry_run=true
+        ;;
+      --uninstall|--delete)
+        action=delete
+        ;;
+      --all)
+        install_all=true
+        ;;
+      --)
+        shift
+        requested_packages+=("$@")
+        break
+        ;;
+      -*)
+        printf 'Error: unknown option: %s\n' "$1" >&2
+        usage >&2
+        exit 64
+        ;;
+      *)
+        requested_packages+=("$1")
+        ;;
+    esac
+    shift
+  done
+
+  if [[ "$install_all" == "true" && ${#requested_packages[@]} -gt 0 ]]; then
+    printf 'Error: --all cannot be combined with package names.\n' >&2
+    exit 64
+  fi
+
+  if [[ "$install_all" == "false" && ${#requested_packages[@]} -eq 0 ]]; then
+    printf 'Error: choose --all or at least one package.\n' >&2
+    usage >&2
+    exit 64
+  fi
+
   local -a managed_packages
   mapfile -t managed_packages < <(grep -Ev '^[[:space:]]*(#|$)' "$manifest")
 
   local -a selected_packages
-  if [[ "$1" == "--all" ]]; then
-    if [[ $# -ne 1 ]]; then
-      printf 'Error: --all cannot be combined with package names.\n' >&2
-      exit 64
-    fi
+  if [[ "$install_all" == "true" ]]; then
     selected_packages=("${managed_packages[@]}")
   else
-    selected_packages=("$@")
+    selected_packages=("${requested_packages[@]}")
   fi
 
   local package
@@ -120,7 +187,7 @@ main() {
       exit 66
     fi
 
-    stow_package "$repo_dir" "$HOME" "$package"
+    stow_package "$repo_dir" "$HOME" "$package" "$action" "$dry_run"
   done
 }
 

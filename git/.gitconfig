@@ -4,6 +4,12 @@
 [pull]
 	rebase = true
 
+[fetch]
+	prune = true
+
+[push]
+	autoSetupRemote = true
+
 [alias]
 	lg = log --graph --decorate --all --date=relative --pretty=format:'%C(auto)%h%d%Creset %s %C(dim white)(%cr)%Creset %C(blue)<%an>%Creset'
 
