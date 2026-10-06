@@ -204,7 +204,18 @@ windows-terminal/
 └── install.ps1
 ```
 
-The baseline keeps copied text free of rich formatting and gives every terminal profile 10,000 lines of scrollback history.
+The baseline keeps Windows Terminal close to a conventional Unix terminal while remaining native to Windows:
+
+- PowerShell 7's `PowerShell` profile is the default profile;
+- Cascadia Mono at 12 points with normal weight;
+- the built-in Campbell dark color scheme;
+- a filled block cursor;
+- 8-pixel terminal padding;
+- a fully opaque background with acrylic disabled;
+- plain-text clipboard copying;
+- 10,000 lines of scrollback history for every profile.
+
+No global `startingDirectory` is set. PowerShell therefore keeps its normal Windows user-home start location, while WSL and other shells remain free to use their own native home-directory behavior.
 
 The installer supports the stable packaged Windows Terminal settings location and the normal unpackaged location. It uses the same ownership-marker model as the VS Code settings installer and refuses to overwrite unmanaged settings without `-Force`.
 
