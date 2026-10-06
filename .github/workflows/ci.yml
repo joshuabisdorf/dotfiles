@@ -211,6 +211,15 @@ jobs:
             throw "PSReadLine variable color must be configured."
           }
 
+          $tabHandler = @(
+            Get-PSReadLineKeyHandler -Bound |
+              Where-Object { $_.Key -eq "Tab" }
+          )
+
+          if ($tabHandler.Count -ne 1 -or $tabHandler[0].Function -ne "Complete") {
+            throw "Tab must use Bash-like Complete behavior."
+          }
+
           Push-Location $HOME
           try {
             $promptText = prompt
