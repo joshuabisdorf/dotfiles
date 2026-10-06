@@ -40,7 +40,7 @@ Flags:
   -Force     Adopt an existing unmanaged copied/profile configuration.
 
 Run ".\setup.ps1 list" to see components.
-"@ | Write-Host
+"@
 }
 
 # Show-Components
@@ -59,12 +59,12 @@ function Show-Components {
     $vscodeAvailability = if (Get-Command code -ErrorAction SilentlyContinue) { "" } else { " (code CLI not currently available)" }
     $terminalAvailability = if (Get-Command wt.exe -ErrorAction SilentlyContinue) { "" } else { " (Windows Terminal not currently available)" }
 
-    "{0,-12} {1}" -f "COMPONENT", "DESCRIPTION" | Write-Host
-    "{0,-12} {1}" -f "git", "Git user configuration (~/.gitconfig)$gitAvailability" | Write-Host
-    "{0,-12} {1}" -f "powershell", "PowerShell 7 Current User/All Hosts profile" | Write-Host
-    "{0,-12} {1}" -f "vscode", "VS Code user settings + extensions$vscodeAvailability" | Write-Host
-    "{0,-12} {1}" -f "terminal", "Windows Terminal settings$terminalAvailability" | Write-Host
-    "{0,-12} {1}" -f "all", "All components above" | Write-Host
+    "{0,-12} {1}" -f "COMPONENT", "DESCRIPTION"
+    "{0,-12} {1}" -f "git", "Git user configuration (~/.gitconfig)$gitAvailability"
+    "{0,-12} {1}" -f "powershell", "PowerShell 7 Current User/All Hosts profile"
+    "{0,-12} {1}" -f "vscode", "VS Code user settings + extensions$vscodeAvailability"
+    "{0,-12} {1}" -f "terminal", "Windows Terminal settings$terminalAvailability"
+    "{0,-12} {1}" -f "all", "All components above"
 }
 
 # Test-ManagedMarker
