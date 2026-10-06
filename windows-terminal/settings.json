@@ -1,0 +1,10 @@
+{
+  "$schema": "https://aka.ms/terminal-profiles-schema",
+  "copyFormatting": "none",
+  "profiles": {
+    "defaults": {
+      "historySize": 10000
+    },
+    "list": []
+  }
+}

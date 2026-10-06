@@ -1,5 +1,6 @@
 # Microsoft C/C++ language support.
 ms-vscode.cpptools
 
-# Provides "Dark (Visual Studio - C/C++)".
+# Provides the GUI theme "Dark (Visual Studio - C/C++)".
+# VS Code stores that theme as "Visual Studio Dark - C++" in settings.json.
 ms-vscode.cpptools-themes
