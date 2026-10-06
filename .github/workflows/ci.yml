@@ -35,19 +35,13 @@ jobs:
 
       - name: Validate Bash syntax
         run: |
-          bash -n install.sh
           bash -n setup.sh
           bash -n bash/.bashrc
-          bash -n vscode/install-settings.sh
-          bash -n vscode/install-extensions.sh
 
       - name: Run ShellCheck
         run: |
-          shellcheck install.sh
           shellcheck setup.sh
           shellcheck bash/.bashrc
-          shellcheck vscode/install-settings.sh
-          shellcheck vscode/install-extensions.sh
 
       - name: Validate Git configuration
         run: |
@@ -71,44 +65,46 @@ jobs:
           python3 -m json.tool vscode/settings.json >/dev/null
           python3 -m json.tool windows-terminal/settings.json >/dev/null
 
-      - name: Verify no-argument behavior
+      - name: Verify Linux setup interface
         shell: bash
         run: |
-          set +e
-          output="$(./install.sh 2>&1)"
-          status=$?
-          set -e
+          output="$(./setup.sh list)"
+          grep -q '^git ' <<< "$output"
+          grep -q '^bash ' <<< "$output"
+          grep -q '^readline ' <<< "$output"
+          grep -q '^vim ' <<< "$output"
+          grep -q '^vscode ' <<< "$output"
+          grep -q '^powershell ' <<< "$output"
+          grep -q '^all ' <<< "$output"
 
-          test "$status" -eq 64
-          grep -q '^Usage:' <<< "$output"
-
-      - name: Reject unmanaged packages
-        shell: bash
-        run: |
           set +e
-          output="$(./install.sh vscode 2>&1)"
+          output="$(./setup.sh install not-a-component --dry-run 2>&1)"
           status=$?
           set -e
 
           test "$status" -eq 66
-          grep -q 'unmanaged or invalid package' <<< "$output"
+          grep -q 'unknown component' <<< "$output"
 
-      - name: Verify Stow dry run
+      - name: Verify all-components dry run
         shell: bash
         run: |
           export HOME="$(mktemp -d)"
-          ./install.sh --dry-run --all
+          export XDG_CONFIG_HOME="$HOME/.config"
+
+          ./setup.sh install all --dry-run
 
           test ! -e "$HOME/.gitconfig"
           test ! -e "$HOME/.bashrc"
           test ! -e "$HOME/.inputrc"
           test ! -e "$HOME/.vimrc"
+          test ! -e "$XDG_CONFIG_HOME/Code/User/settings.json"
 
-      - name: Verify Stow install and uninstall
+      - name: Verify Stow install reinstall and uninstall
         shell: bash
         run: |
           export HOME="$(mktemp -d)"
-          ./install.sh --all
+
+          ./setup.sh install git bash readline vim
 
           test -L "$HOME/.gitconfig"
           test -L "$HOME/.bashrc"
@@ -120,7 +116,14 @@ jobs:
           test "$(git config --file "$HOME/.gitconfig" --get fetch.prune)" = "true"
           test "$(git config --file "$HOME/.gitconfig" --get push.autoSetupRemote)" = "true"
 
-          ./install.sh --uninstall --all
+          ./setup.sh reinstall git bash readline vim
+
+          test -L "$HOME/.gitconfig"
+          test -L "$HOME/.bashrc"
+          test -L "$HOME/.inputrc"
+          test -L "$HOME/.vimrc"
+
+          ./setup.sh uninstall git bash readline vim
 
           test ! -e "$HOME/.gitconfig"
           test ! -e "$HOME/.bashrc"
@@ -138,15 +141,16 @@ jobs:
             [[ "$HISTCONTROL" == *erasedups* ]]
           '
 
-      - name: Verify top-level dry run
-        shell: bash
+      - name: Verify obsolete setup scripts are absent
         run: |
-          export HOME="$(mktemp -d)"
-          export XDG_CONFIG_HOME="$HOME/.config"
-          ./setup.sh --dry-run
-
-          test ! -e "$HOME/.gitconfig"
-          test ! -e "$XDG_CONFIG_HOME/Code/User/settings.json"
+          test ! -e install.sh
+          test ! -e stow-packages.txt
+          test ! -e vscode/install-settings.sh
+          test ! -e vscode/install-settings.ps1
+          test ! -e vscode/install-extensions.sh
+          test ! -e vscode/install-extensions.ps1
+          test ! -e powershell/install.ps1
+          test ! -e windows-terminal/install.ps1
 
   windows:
     name: Windows validation
@@ -210,7 +214,17 @@ jobs:
             throw "Windows Terminal must not globally override startingDirectory."
           }
 
-      - name: Verify Windows top-level dry run
+      - name: Verify Windows setup interface
+        shell: pwsh
+        run: |
+          $output = .\setup.ps1 list | Out-String
+          if ($output -notmatch "(?m)^git\s") { throw "git component missing" }
+          if ($output -notmatch "(?m)^powershell\s") { throw "powershell component missing" }
+          if ($output -notmatch "(?m)^vscode\s") { throw "vscode component missing" }
+          if ($output -notmatch "(?m)^terminal\s") { throw "terminal component missing" }
+          if ($output -notmatch "(?m)^all\s") { throw "all component missing" }
+
+      - name: Verify Windows all-components dry run
         shell: pwsh
         run: |
           $env:APPDATA = Join-Path $env:RUNNER_TEMP "dotfiles-appdata"
@@ -218,4 +232,31 @@ jobs:
           New-Item -ItemType Directory -Path $env:APPDATA -Force | Out-Null
           New-Item -ItemType Directory -Path $env:LOCALAPPDATA -Force | Out-Null
 
-          .\setup.ps1 -DryRun
+          .\setup.ps1 install all -DryRun
+
+          if (Test-Path (Join-Path $env:APPDATA "Code\User\settings.json")) {
+            throw "VS Code settings changed during dry run."
+          }
+          if (Test-Path (Join-Path $env:LOCALAPPDATA "Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json")) {
+            throw "Windows Terminal settings changed during dry run."
+          }
+
+      - name: Verify obsolete setup scripts are absent
+        shell: pwsh
+        run: |
+          $obsolete = @(
+            "install.sh",
+            "stow-packages.txt",
+            "vscode/install-settings.sh",
+            "vscode/install-settings.ps1",
+            "vscode/install-extensions.sh",
+            "vscode/install-extensions.ps1",
+            "powershell/install.ps1",
+            "windows-terminal/install.ps1"
+          )
+
+          foreach ($path in $obsolete) {
+            if (Test-Path -LiteralPath $path) {
+              throw "Obsolete setup entry point still exists: $path"
+            }
+          }

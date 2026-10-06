@@ -8,95 +8,127 @@ Portable user configuration for a consistent development environment across Linu
 - Make several computers behave consistently without provisioning the operating system.
 - Prefer portable, understandable defaults over large frameworks.
 - Keep personal, machine-specific, and secret values outside the repository.
-- Make installation, dry runs, updates, and removal explicit and reversible.
+- Keep the setup interface small: one entry point for Linux/WSL and one for Windows.
+- Make installation, reinstallation, dry runs, and removal explicit and reversible.
 
-## Top-level setup
+## Setup interface
 
-The repository has two top-level entry points.
+There are exactly two setup entry points:
 
-Linux:
+- Linux / WSL: `./setup.sh`
+- Windows: `.\setup.ps1`
+
+All component-specific setup logic lives inside those two scripts. Configuration directories contain configuration, not separate installer commands.
+
+### Linux / WSL
+
+List available components:
 
 ```sh
-./setup.sh
+./setup.sh list
 ```
 
-Windows PowerShell:
+Install everything applicable:
+
+```sh
+./setup.sh install all
+```
+
+Install selected components:
+
+```sh
+./setup.sh install git bash readline vim
+```
+
+Reapply repository configuration after changes:
+
+```sh
+./setup.sh reinstall all
+```
+
+Preview without changing anything:
+
+```sh
+./setup.sh reinstall all --dry-run
+```
+
+Remove selected managed configuration:
+
+```sh
+./setup.sh uninstall git bash
+```
+
+Available Linux components are:
+
+- `git`: Git user configuration through GNU Stow;
+- `bash`: interactive Bash configuration through GNU Stow;
+- `readline`: Readline key bindings through GNU Stow;
+- `vim`: Vim configuration through GNU Stow;
+- `vscode`: VS Code settings and extensions on desktop Linux;
+- `powershell`: PowerShell 7 profile when `pwsh` is installed;
+- `all`: every applicable component.
+
+Under WSL, Windows-side VS Code configuration is intentionally left to the Windows setup entry point.
+
+### Windows
+
+Run setup from PowerShell 7.
+
+List available components:
 
 ```powershell
-.\setup.ps1
+.\setup.ps1 list
 ```
 
-Both support a dry run and uninstall:
-
-```sh
-./setup.sh --dry-run
-./setup.sh --uninstall
-```
+Install everything:
 
 ```powershell
-.\setup.ps1 -DryRun
-.\setup.ps1 -Uninstall
+.\setup.ps1 install all
 ```
 
-When an existing VS Code settings file, Windows Terminal settings file, or PowerShell profile is not already managed by this repository, setup refuses to overwrite it. Use `--force` or `-Force` to explicitly adopt that file.
+Install selected components:
 
-The setup commands configure applications that are already installed. They do not install Git, Bash, GNU Stow, Vim, PowerShell, VS Code, Windows Terminal, or operating-system packages.
-
-### WSL
-
-Run `./setup.sh` inside WSL for the Unix environment. VS Code desktop settings are intentionally skipped there because normal VS Code user settings live on the Windows side. Run `.\setup.ps1` from Windows to configure Windows-side VS Code, PowerShell, and Windows Terminal.
-
-## GNU Stow packages
-
-GNU Stow manages Unix-style dotfiles:
-
-```text
-dotfiles/
-├── git/
-│   └── .gitconfig
-├── bash/
-│   └── .bashrc
-├── readline/
-│   └── .inputrc
-└── vim/
-    └── .vimrc
+```powershell
+.\setup.ps1 install git powershell
 ```
 
-The managed package list lives in `stow-packages.txt`.
+Reapply repository configuration after changes:
 
-Install every Stow package:
-
-```sh
-./install.sh --all
+```powershell
+.\setup.ps1 reinstall all
 ```
 
-Install selected packages:
+Preview without changing anything:
 
-```sh
-./install.sh git bash readline vim
+```powershell
+.\setup.ps1 reinstall all -DryRun
 ```
 
-Preview an operation without changing the home directory:
+Remove selected managed configuration:
 
-```sh
-./install.sh --dry-run --all
+```powershell
+.\setup.ps1 uninstall vscode terminal
 ```
 
-Remove managed links:
+Available Windows components are:
 
-```sh
-./install.sh --uninstall --all
-./install.sh --uninstall git bash
-```
+- `git`: shared Git user configuration;
+- `powershell`: PowerShell 7 Current User/All Hosts profile;
+- `vscode`: VS Code settings and extensions;
+- `terminal`: Windows Terminal settings;
+- `all`: every component.
 
-Stow creates symlinks in the home directory, for example:
+Use `-Force` on Windows or `--force` on Linux when explicitly adopting an existing unmanaged copied/profile configuration. Setup otherwise refuses to overwrite unrelated user files.
 
-```text
-~/.gitconfig -> ~/dotfiles/git/.gitconfig
-~/.bashrc    -> ~/dotfiles/bash/.bashrc
-~/.inputrc   -> ~/dotfiles/readline/.inputrc
-~/.vimrc     -> ~/dotfiles/vim/.vimrc
-```
+## Install vs. reinstall
+
+`install` is for initial setup. Managed copied/profile files that are already installed are left alone.
+
+`reinstall` reapplies the repository's current configuration. This is the normal command after changing a copied configuration or pulling such changes from Git.
+
+On Linux, GNU Stow components use `--stow` for install and `--restow` for reinstall. Because Stow creates symlinks, edits to existing linked configuration files are already visible immediately.
+
+On Windows, Git, VS Code, and Windows Terminal configuration is copied into the applications' normal user locations and tracked with small sidecar ownership markers, so `reinstall` refreshes those copies. The PowerShell profile itself is a small managed shim that dot-sources the repository profile directly.
 
 ## Git
 
@@ -109,13 +141,19 @@ Portable Git defaults include:
 - `git lg` shows a compact decorated commit graph;
 - `~/.gitconfig.local` is included for identity and machine-specific settings.
 
-Example local identity:
+On Linux/WSL, `git/.gitconfig` is linked to `~/.gitconfig` with GNU Stow. On Windows, `setup.ps1` copies the same file to `~/.gitconfig` and tracks ownership with `~/.gitconfig.dotfiles-managed`.
+
+Keep personal identity outside the repository:
 
 ```ini
 [user]
     name = Your Name
     email = you@example.com
 ```
+
+Save that as `~/.gitconfig.local`.
+
+If Windows already has an unmanaged `~/.gitconfig`, review it before using `-Force`; move personal settings you want to retain into `~/.gitconfig.local`.
 
 ## Bash and Readline
 
@@ -152,11 +190,7 @@ VS Code configuration lives in:
 ```text
 vscode/
 ├── settings.json
-├── extensions.txt
-├── install-settings.sh
-├── install-settings.ps1
-├── install-extensions.sh
-└── install-extensions.ps1
+└── extensions.txt
 ```
 
 The C/C++ Themes extension labels the selected theme in the GUI as `Dark (Visual Studio - C/C++)`. VS Code stores that selection in `settings.json` as:
@@ -165,14 +199,14 @@ The C/C++ Themes extension labels the selected theme in the GUI as `Dark (Visual
 "workbench.colorTheme": "Visual Studio Dark - C++"
 ```
 
-The settings installer uses the normal user-settings locations:
+The setup entry points treat VS Code as one component: user settings plus extensions.
+
+Settings use the normal user locations:
 
 - Linux: `~/.config/Code/User/settings.json` unless `XDG_CONFIG_HOME` overrides it;
 - Windows: `%APPDATA%\Code\User\settings.json`.
 
-Settings are copied from the repository and accompanied by a small ownership marker. Subsequent setup runs may update managed settings. An unmanaged existing settings file is not overwritten unless force is explicitly requested.
-
-Extensions are installed from `extensions.txt` through the `code` CLI and can also be removed by the uninstall operation.
+Copied settings are accompanied by a small ownership marker. Unmanaged existing settings are not overwritten unless force is explicitly requested.
 
 ## PowerShell
 
@@ -180,11 +214,10 @@ Portable PowerShell configuration lives in:
 
 ```text
 powershell/
-├── profile.ps1
-└── install.ps1
+└── profile.ps1
 ```
 
-The installer manages the Current User/All Hosts PowerShell profile. The installed profile is a small shim that dot-sources the repository's `powershell/profile.ps1`, so changes in the repository take effect without copying the profile again.
+Setup manages the Current User/All Hosts PowerShell profile as a small shim that dot-sources the repository's `powershell/profile.ps1`.
 
 The profile configures PSReadLine with:
 
@@ -192,7 +225,9 @@ The profile configures PSReadLine with:
 - duplicate suppression during recall;
 - Up/Down prefix history search.
 
-Machine-specific PowerShell configuration can live in `profile.local.ps1` beside the user's Current User/All Hosts profile.
+Machine-specific PowerShell configuration can live in `profile.local.ps1` beside the Current User/All Hosts profile.
+
+Native Windows setup requires PowerShell 7 rather than Windows PowerShell 5.1.
 
 ## Windows Terminal
 
@@ -200,8 +235,7 @@ Windows Terminal configuration lives in:
 
 ```text
 windows-terminal/
-├── settings.json
-└── install.ps1
+└── settings.json
 ```
 
 The baseline keeps Windows Terminal close to a conventional Unix terminal while remaining native to Windows:
@@ -215,34 +249,46 @@ The baseline keeps Windows Terminal close to a conventional Unix terminal while 
 - plain-text clipboard copying;
 - 10,000 lines of scrollback history for every profile.
 
-No global `startingDirectory` is set. PowerShell therefore keeps its normal Windows user-home start location, while WSL and other shells remain free to use their own native home-directory behavior.
-
-The installer supports the stable packaged Windows Terminal settings location and the normal unpackaged location. It uses the same ownership-marker model as the VS Code settings installer and refuses to overwrite unmanaged settings without `-Force`.
+No global `startingDirectory` is set, so each shell keeps its own normal home-directory behavior.
 
 ## Installation
 
-Prerequisites for the Stow-managed Unix configuration:
+The setup scripts configure applications that are already installed; they do not provision the operating system or install applications.
+
+Linux/WSL prerequisites for the core Stow-managed configuration:
 
 - Git
 - Bash
 - GNU Stow
+- Vim, if using the `vim` component
 
-Clone the repository:
+Optional Linux components require their corresponding applications.
+
+Windows setup requires PowerShell 7. Git, VS Code, and Windows Terminal should be installed for their respective components.
+
+Clone the repository and inspect available components:
 
 ```sh
 git clone git@github.com:joshuabisdorf/dotfiles.git ~/dotfiles
 cd ~/dotfiles
+./setup.sh list
 ```
 
-Then run the appropriate top-level setup command.
+On Windows:
+
+```powershell
+git clone https://github.com/joshuabisdorf/dotfiles.git $HOME\dotfiles
+cd $HOME\dotfiles
+.\setup.ps1 list
+```
 
 ## CI
 
-CI validates the repository on both Linux and Windows.
+CI validates both public setup entry points.
 
-Linux validation covers Bash syntax, ShellCheck, Git and Vim configuration, strict JSON settings, Stow dry-run behavior, install/uninstall round trips, and the top-level setup dry run.
+Linux validation covers Bash syntax, ShellCheck, Git and Vim configuration, strict JSON settings, component listing, dry runs, Stow install/reinstall/uninstall behavior, and Bash defaults.
 
-Windows validation parses every PowerShell script, validates JSON settings, and runs the Windows top-level setup in dry-run mode.
+Windows validation parses PowerShell, validates JSON settings, checks the component interface, exercises the Windows all-components dry run, and verifies that obsolete component installer scripts are absent.
 
 ## Security
 
