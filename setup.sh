@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+readonly REPO_DIR
 readonly VSCODE_MARKER='joshuabisdorf/dotfiles:vscode-settings'
 readonly POWERSHELL_MARKER='# Managed by joshuabisdorf/dotfiles: powershell-profile'
 readonly -a STOW_COMPONENTS=(git bash readline vim)
@@ -446,7 +447,7 @@ configure_powershell() {
   fi
 
   local target_profile
-  target_profile="$(pwsh -NoProfile -Command '$PROFILE.CurrentUserAllHosts' | tr -d '\r')"
+  target_profile="$(pwsh -NoProfile -Command "\$PROFILE.CurrentUserAllHosts" | tr -d '\r')"
 
   if [[ -z "$target_profile" ]]; then
     printf 'Error: PowerShell did not report a Current User/All Hosts profile path.\n' >&2
