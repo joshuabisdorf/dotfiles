@@ -1,16 +1,33 @@
 {
-  "workbench.colorTheme": "Dark (Visual Studio - C/C++)",
-  "workbench.preferredDarkColorTheme": "Dark (Visual Studio - C/C++)",
-  "editor.detectIndentation": true,
+  "window.title": "${activeRepositoryName}${separator}${activeRepositoryBranchName}${separator}${dirty}${activeEditorMedium}${separator}${remoteName}",
+  "window.commandCenter": false,
+  "workbench.colorTheme": "Visual Studio Dark - C++",
+  "workbench.sideBar.location": "right",
+  "workbench.startupEditor": "none",
+  "workbench.browser.showInTitleBar": false,
+  "workbench.layoutControl.enabled": false,
+  "workbench.editor.enablePreview": false,
+  "editor.detectIndentation": false,
   "editor.insertSpaces": true,
-  "editor.tabSize": 4,
-  "editor.renderWhitespace": "selection",
+  "editor.tabSize": 2,
   "editor.rulers": [
-    100
+    80
   ],
-  "editor.bracketPairColorization.enabled": true,
   "editor.guides.bracketPairs": true,
+  "editor.stickyScroll.enabled": true,
+  "editor.linkedEditing": true,
+  "editor.formatOnSave": true,
+  "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
-  "files.trimTrailingWhitespace": true
+  "C_Cpp.formatting": "clangFormat",
+  "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, DerivePointerAlignment: false, PointerAlignment: Left, ReferenceAlignment: Left }",
+  "[markdown]": {
+    "files.trimTrailingWhitespace": false
+  },
+  "extensions.ignoreRecommendations": true,
+  "git.autofetch": "all",
+  "telemetry.telemetryLevel": "off",
+  "chat.titleBar.openInAgentsWindow.enabled": false,
+  "chat.titleBar.signIn.enabled": false
 }
