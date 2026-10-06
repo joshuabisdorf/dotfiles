@@ -1,4 +1,0 @@
-git
-bash
-readline
-vim
