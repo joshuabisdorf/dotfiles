@@ -68,14 +68,19 @@ function Get-DotfilesGitContext {
         return ""
     }
 
-    $branch = git symbolic-ref --quiet --short HEAD 2>$null |
+    $location = Get-Location
+    if ($location.Provider.Name -ne "FileSystem") {
+        return ""
+    }
+
+    $branch = git -C $location.Path symbolic-ref --quiet --short HEAD 2>$null |
         Select-Object -First 1
 
     if ($LASTEXITCODE -eq 0 -and $branch) {
         return " ($branch)"
     }
 
-    $commit = git rev-parse --short HEAD 2>$null |
+    $commit = git -C $location.Path rev-parse --short HEAD 2>$null |
         Select-Object -First 1
 
     if ($LASTEXITCODE -eq 0 -and $commit) {

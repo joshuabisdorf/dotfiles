@@ -239,6 +239,23 @@ jobs:
             throw "PowerShell prompt must end with >."
           }
 
+          $promptRepo = Join-Path $env:RUNNER_TEMP "prompt-repo"
+          New-Item -ItemType Directory -Path (Join-Path $promptRepo ".git") -Force | Out-Null
+          New-Item -ItemType Directory -Path (Join-Path $promptRepo ".git\refs\heads") -Force | Out-Null
+          Set-Content -LiteralPath (Join-Path $promptRepo ".git\HEAD") -Value "ref: refs/heads/prompt-test"
+
+          Push-Location $promptRepo
+          try {
+            $gitPromptText = prompt
+          }
+          finally {
+            Pop-Location
+          }
+
+          if ($gitPromptText -notlike "* (prompt-test) > *") {
+            throw "PowerShell prompt must show the Git branch on the first prompt in a repository."
+          }
+
       - name: Validate JSON settings
         shell: pwsh
         run: |
