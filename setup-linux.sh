@@ -4,9 +4,8 @@ set -euo pipefail
 REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_DIR
 readonly VSCODE_MARKER='joshuabisdorf/dotfiles:vscode-settings'
-readonly POWERSHELL_MARKER='# Managed by joshuabisdorf/dotfiles: powershell-profile'
 readonly -a STOW_COMPONENTS=(git bash readline vim)
-readonly -a COMPONENTS=(git bash readline vim vscode powershell)
+readonly -a COMPONENTS=(git bash readline vim vscode)
 
 # usage
 # Requires:
@@ -22,10 +21,13 @@ readonly -a COMPONENTS=(git bash readline vim vscode powershell)
 usage() {
   cat <<'EOF'
 Usage:
-  ./setup.sh list
-  ./setup.sh install <all|component...> [--dry-run] [--force]
-  ./setup.sh reinstall <all|component...> [--dry-run] [--force]
-  ./setup.sh uninstall <all|component...> [--dry-run]
+  ./setup-linux.sh list
+  ./setup-linux.sh install --all [--dry-run] [--force]
+  ./setup-linux.sh install <component...> [--dry-run] [--force]
+  ./setup-linux.sh reinstall --all [--dry-run] [--force]
+  ./setup-linux.sh reinstall <component...> [--dry-run] [--force]
+  ./setup-linux.sh uninstall --all [--dry-run]
+  ./setup-linux.sh uninstall <component...> [--dry-run]
 
 Commands:
   list       Show available setup components.
@@ -37,7 +39,7 @@ Flags:
   --dry-run  Show what would change without changing anything.
   --force    Adopt an existing unmanaged copied/profile configuration.
 
-Run "./setup.sh list" to see components.
+Run "./setup-linux.sh list" to see components.
 EOF
 }
 
@@ -83,13 +85,6 @@ list_components() {
     printf '%-12s %s\n' 'vscode' 'VS Code user settings + extensions (code CLI not currently available)'
   fi
 
-  if command -v pwsh >/dev/null 2>&1; then
-    printf '%-12s %s\n' 'powershell' 'PowerShell Current User/All Hosts profile'
-  else
-    printf '%-12s %s\n' 'powershell' 'PowerShell Current User/All Hosts profile (pwsh not currently available)'
-  fi
-
-  printf '%-12s %s\n' 'all' 'All applicable components above'
 }
 
 # component_is_known
@@ -162,27 +157,6 @@ marker_is_managed() {
   local first_line
   IFS= read -r first_line < "$marker_file"
   [[ "$first_line" == "$marker_id" ]]
-}
-
-# profile_is_managed
-# Requires:
-#   - $1 is a profile file path.
-# Modifies:
-#   - Nothing.
-# Effects:
-#   - Tests whether the first line identifies the PowerShell profile shim as managed.
-# Inputs:
-#   - $1: profile file path.
-# Outputs:
-#   - Exit status 0 when managed; 1 otherwise.
-profile_is_managed() {
-  local profile_file="$1"
-
-  [[ -r "$profile_file" ]] || return 1
-
-  local first_line
-  IFS= read -r first_line < "$profile_file"
-  [[ "$first_line" == "$POWERSHELL_MARKER" ]]
 }
 
 # configure_stow_component
@@ -417,95 +391,6 @@ configure_vscode() {
   configure_vscode_extensions "$action" "$dry_run"
 }
 
-# configure_powershell
-# Requires:
-#   - PowerShell 7 is available unless dry-run is enabled.
-# Modifies:
-#   - PowerShell's Current User/All Hosts profile unless dry-run is enabled.
-# Effects:
-#   - Installs a shim that dot-sources powershell/profile.ps1, reinstalls it, or removes it.
-# Inputs:
-#   - $1: action.
-#   - $2: dry-run flag.
-#   - $3: force flag.
-# Outputs:
-#   - PowerShell profile status.
-configure_powershell() {
-  local action="$1"
-  local dry_run="$2"
-  local force="$3"
-  local source_profile="$REPO_DIR/powershell/profile.ps1"
-
-  if ! command -v pwsh >/dev/null 2>&1; then
-    if [[ "$dry_run" == "true" ]]; then
-      printf 'Would %s PowerShell profile (pwsh is unavailable, so the target path cannot be resolved).\n' "$action"
-      return 0
-    fi
-
-    printf 'Error: PowerShell 7 (pwsh) is not available on PATH.\n' >&2
-    return 69
-  fi
-
-  local target_profile
-  target_profile="$(pwsh -NoProfile -Command "\$PROFILE.CurrentUserAllHosts" | tr -d '\r')"
-
-  if [[ -z "$target_profile" ]]; then
-    printf 'Error: PowerShell did not report a Current User/All Hosts profile path.\n' >&2
-    return 70
-  fi
-
-  if [[ "$action" == "uninstall" ]]; then
-    if [[ ! -e "$target_profile" ]]; then
-      printf 'PowerShell profile is not installed by this repository.\n'
-      return 0
-    fi
-
-    if ! profile_is_managed "$target_profile"; then
-      printf 'Error: refusing to remove unmanaged PowerShell profile: %s\n' "$target_profile" >&2
-      return 73
-    fi
-
-    if [[ "$dry_run" == "true" ]]; then
-      printf 'Would remove managed PowerShell profile: %s\n' "$target_profile"
-      return 0
-    fi
-
-    rm -f -- "$target_profile"
-    printf 'Removed managed PowerShell profile: %s\n' "$target_profile"
-    return 0
-  fi
-
-  if [[ ! -r "$source_profile" ]]; then
-    printf 'Error: PowerShell profile source not found: %s\n' "$source_profile" >&2
-    return 66
-  fi
-
-  if [[ "$action" == "install" ]] &&
-     [[ -e "$target_profile" ]] &&
-     profile_is_managed "$target_profile"; then
-    printf 'PowerShell profile is already installed; use reinstall to reapply it.\n'
-    return 0
-  fi
-
-  if [[ -e "$target_profile" ]] &&
-     ! profile_is_managed "$target_profile" &&
-     [[ "$force" != "true" ]]; then
-    printf 'Error: refusing to overwrite unmanaged PowerShell profile: %s\n' "$target_profile" >&2
-    printf 'Re-run with --force to adopt it.\n' >&2
-    return 73
-  fi
-
-  if [[ "$dry_run" == "true" ]]; then
-    printf 'Would %s PowerShell profile shim: %s -> %s\n' "$action" "$target_profile" "$source_profile"
-    return 0
-  fi
-
-  mkdir -p -- "$(dirname -- "$target_profile")"
-  local escaped_source="${source_profile//\'/\'\'}"
-  printf "%s\n. '%s'\n" "$POWERSHELL_MARKER" "$escaped_source" > "$target_profile"
-  printf '%s PowerShell profile shim: %s\n' "${action^}ed" "$target_profile"
-}
-
 # run_component
 # Requires:
 #   - $2 is a known component.
@@ -537,7 +422,7 @@ run_component() {
     vscode)
       if is_wsl; then
         if [[ "$selected_all" == "true" ]]; then
-          printf 'Skipping vscode under WSL; configure Windows-side VS Code with setup.ps1.\n'
+          printf 'Skipping vscode under WSL; configure Windows-side VS Code with setup-windows.ps1.\n'
           return 0
         fi
 
@@ -558,20 +443,6 @@ run_component() {
 
       configure_vscode "$action" "$dry_run" "$force"
       ;;
-    powershell)
-      if [[ "$dry_run" != "true" && "$action" != "uninstall" ]] &&
-         ! command -v pwsh >/dev/null 2>&1; then
-        if [[ "$selected_all" == "true" ]]; then
-          printf 'Skipping powershell because pwsh is unavailable.\n'
-          return 0
-        fi
-
-        printf 'Error: PowerShell 7 (pwsh) is not available on PATH.\n' >&2
-        return 69
-      fi
-
-      configure_powershell "$action" "$dry_run" "$force"
-      ;;
   esac
 }
 
@@ -585,7 +456,7 @@ run_component() {
 #   - Provides the only Linux/WSL setup entry point for listing and managing dotfiles.
 # Inputs:
 #   - list, install, reinstall, or uninstall command.
-#   - all or one or more component names for mutating commands.
+#   - --all or one or more component names for mutating commands.
 #   - Optional --dry-run and --force flags.
 # Outputs:
 #   - Setup status and safety errors.
@@ -622,10 +493,14 @@ main() {
 
   local dry_run=false
   local force=false
+  local selected_all=false
   local -a requested=()
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      --all)
+        selected_all=true
+        ;;
       --dry-run)
         dry_run=true
         ;;
@@ -648,29 +523,26 @@ main() {
     return 64
   fi
 
-  if [[ ${#requested[@]} -eq 0 ]]; then
-    printf 'Error: choose "all" or at least one component.\n' >&2
+  if [[ "$selected_all" == "true" && ${#requested[@]} -gt 0 ]]; then
+    printf 'Error: --all cannot be combined with individual components.\n' >&2
+    return 64
+  fi
+
+  if [[ "$selected_all" == "false" && ${#requested[@]} -eq 0 ]]; then
+    printf 'Error: choose --all or at least one component.\n' >&2
     usage >&2
     return 64
   fi
 
-  local selected_all=false
   local -a selected=()
-
-  if [[ " ${requested[*]} " == *" all "* ]]; then
-    if [[ ${#requested[@]} -ne 1 ]]; then
-      printf 'Error: "all" cannot be combined with individual components.\n' >&2
-      return 64
-    fi
-
-    selected_all=true
+  if [[ "$selected_all" == "true" ]]; then
     selected=("${COMPONENTS[@]}")
   else
     local component
     for component in "${requested[@]}"; do
       if ! component_is_known "$component"; then
         printf 'Error: unknown component: %s\n' "$component" >&2
-        printf 'Run "./setup.sh list" to see available components.\n' >&2
+        printf 'Run "./setup-linux.sh list" to see available components.\n' >&2
         return 66
       fi
       selected+=("$component")

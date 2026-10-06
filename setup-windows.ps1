@@ -4,6 +4,7 @@ $script:RawArguments = @($args)
 $script:RepoDir = $PSScriptRoot
 $script:DryRun = $false
 $script:Force = $false
+$script:All = $false
 $script:GitMarker = "joshuabisdorf/dotfiles:git-config"
 $script:VSCodeMarker = "joshuabisdorf/dotfiles:vscode-settings"
 $script:TerminalMarker = "joshuabisdorf/dotfiles:windows-terminal-settings"
@@ -24,10 +25,13 @@ $script:Components = @("git", "powershell", "vscode", "terminal")
 function Show-Usage {
     @"
 Usage:
-  .\setup.ps1 list
-  .\setup.ps1 install <all|component...> [-DryRun] [-Force]
-  .\setup.ps1 reinstall <all|component...> [-DryRun] [-Force]
-  .\setup.ps1 uninstall <all|component...> [-DryRun]
+  .\setup-windows.ps1 list
+  .\setup-windows.ps1 install -All [-DryRun] [-Force]
+  .\setup-windows.ps1 install <component...> [-DryRun] [-Force]
+  .\setup-windows.ps1 reinstall -All [-DryRun] [-Force]
+  .\setup-windows.ps1 reinstall <component...> [-DryRun] [-Force]
+  .\setup-windows.ps1 uninstall -All [-DryRun]
+  .\setup-windows.ps1 uninstall <component...> [-DryRun]
 
 Commands:
   list       Show available setup components.
@@ -36,10 +40,11 @@ Commands:
   uninstall  Remove configuration managed by this repository.
 
 Flags:
+  -All       Select every setup component.
   -DryRun    Show what would change without changing anything.
   -Force     Adopt an existing unmanaged copied/profile configuration.
 
-Run ".\setup.ps1 list" to see components.
+Run ".\setup-windows.ps1 list" to see components.
 "@
 }
 
@@ -64,7 +69,6 @@ function Show-Components {
     "{0,-12} {1}" -f "powershell", "PowerShell 7 Current User/All Hosts profile"
     "{0,-12} {1}" -f "vscode", "VS Code user settings + extensions$vscodeAvailability"
     "{0,-12} {1}" -f "terminal", "Windows Terminal settings$terminalAvailability"
-    "{0,-12} {1}" -f "all", "All components above"
 }
 
 # Test-ManagedMarker
@@ -547,6 +551,14 @@ function Parse-Arguments {
                 $script:DryRun = $true
                 continue
             }
+            "-all" {
+                $script:All = $true
+                continue
+            }
+            "--all" {
+                $script:All = $true
+                continue
+            }
             "-force" {
                 $script:Force = $true
                 continue
@@ -604,7 +616,7 @@ function Parse-Arguments {
 #   - Provides the only native Windows setup entry point for listing and managing dotfiles.
 # Inputs:
 #   - list, install, reinstall, or uninstall command.
-#   - all or one or more component names for mutating commands.
+#   - -All or one or more component names for mutating commands.
 #   - Optional -DryRun and -Force flags.
 # Outputs:
 #   - Setup status and safety errors.
@@ -619,7 +631,7 @@ function Main {
             return
         }
         "list" {
-            if ($requested.Count -ne 0 -or $script:DryRun -or $script:Force) {
+            if ($requested.Count -ne 0 -or $script:All -or $script:DryRun -or $script:Force) {
                 throw "list does not accept components or flags."
             }
 
@@ -636,22 +648,23 @@ function Main {
     }
 
     if ($PSVersionTable.PSVersion.Major -lt 7) {
-        throw "PowerShell 7 is required. Run: pwsh -File .\setup.ps1 $command ..."
+        throw "PowerShell 7 is required. Run: pwsh -File .\setup-windows.ps1 $command ..."
     }
 
     if ($command -eq "uninstall" -and $script:Force) {
         throw "-Force is not valid with uninstall."
     }
 
-    if ($requested.Count -eq 0) {
-        Show-Usage
-        throw 'Choose "all" or at least one component.'
+    if ($script:All -and $requested.Count -gt 0) {
+        throw "-All cannot be combined with individual components."
     }
 
-    $selectedAll = $requested -contains "all"
-    if ($selectedAll -and $requested.Count -ne 1) {
-        throw '"all" cannot be combined with individual components.'
+    if (-not $script:All -and $requested.Count -eq 0) {
+        Show-Usage
+        throw "Choose -All or at least one component."
     }
+
+    $selectedAll = $script:All
 
     $selected = if ($selectedAll) {
         @($script:Components)
@@ -659,7 +672,7 @@ function Main {
     else {
         foreach ($component in $requested) {
             if ($script:Components -notcontains $component) {
-                throw "Unknown component: $component. Run '.\setup.ps1 list' to see available components."
+                throw "Unknown component: $component. Run '.\setup-windows.ps1 list' to see available components."
             }
 
             $component

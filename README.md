@@ -15,8 +15,8 @@ Portable user configuration for a consistent development environment across Linu
 
 There are exactly two setup entry points:
 
-- Linux / WSL: `./setup.sh`
-- Windows: `.\setup.ps1`
+- Linux / WSL: `./setup-linux.sh`
+- Windows: `.\setup-windows.ps1`
 
 All component-specific setup logic lives inside those two scripts. Configuration directories contain configuration, not separate installer commands.
 
@@ -25,37 +25,37 @@ All component-specific setup logic lives inside those two scripts. Configuration
 List available components:
 
 ```sh
-./setup.sh list
+./setup-linux.sh list
 ```
 
 Install everything applicable:
 
 ```sh
-./setup.sh install all
+./setup-linux.sh install --all
 ```
 
 Install selected components:
 
 ```sh
-./setup.sh install git bash readline vim
+./setup-linux.sh install git bash readline vim
 ```
 
 Reapply repository configuration after changes:
 
 ```sh
-./setup.sh reinstall all
+./setup-linux.sh reinstall --all
 ```
 
 Preview without changing anything:
 
 ```sh
-./setup.sh reinstall all --dry-run
+./setup-linux.sh reinstall --all --dry-run
 ```
 
 Remove selected managed configuration:
 
 ```sh
-./setup.sh uninstall git bash
+./setup-linux.sh uninstall git bash
 ```
 
 Available Linux components are:
@@ -64,9 +64,9 @@ Available Linux components are:
 - `bash`: interactive Bash configuration through GNU Stow;
 - `readline`: Readline key bindings through GNU Stow;
 - `vim`: Vim configuration through GNU Stow;
-- `vscode`: VS Code settings and extensions on desktop Linux;
-- `powershell`: PowerShell 7 profile when `pwsh` is installed;
-- `all`: every applicable component.
+- `vscode`: VS Code settings and extensions on desktop Linux.
+
+Use `--all` to select every Linux component. It is a selector flag, not a component name.
 
 Under WSL, Windows-side VS Code configuration is intentionally left to the Windows setup entry point.
 
@@ -77,37 +77,37 @@ Run setup from PowerShell 7.
 List available components:
 
 ```powershell
-.\setup.ps1 list
+.\setup-windows.ps1 list
 ```
 
 Install everything:
 
 ```powershell
-.\setup.ps1 install all
+.\setup-windows.ps1 install -All
 ```
 
 Install selected components:
 
 ```powershell
-.\setup.ps1 install git powershell
+.\setup-windows.ps1 install git powershell
 ```
 
 Reapply repository configuration after changes:
 
 ```powershell
-.\setup.ps1 reinstall all
+.\setup-windows.ps1 reinstall -All
 ```
 
 Preview without changing anything:
 
 ```powershell
-.\setup.ps1 reinstall all -DryRun
+.\setup-windows.ps1 reinstall -All -DryRun
 ```
 
 Remove selected managed configuration:
 
 ```powershell
-.\setup.ps1 uninstall vscode terminal
+.\setup-windows.ps1 uninstall vscode terminal
 ```
 
 Available Windows components are:
@@ -115,14 +115,15 @@ Available Windows components are:
 - `git`: shared Git user configuration;
 - `powershell`: PowerShell 7 Current User/All Hosts profile;
 - `vscode`: VS Code settings and extensions;
-- `terminal`: Windows Terminal settings;
-- `all`: every component.
+- `terminal`: Windows Terminal settings.
+
+Use `-All` to select every Windows component. `--all` is also accepted for symmetry with Linux. The selector is not a component name.
 
 Use `-Force` on Windows or `--force` on Linux when explicitly adopting an existing unmanaged copied/profile configuration. Setup otherwise refuses to overwrite unrelated user files.
 
 ## Install vs. reinstall
 
-`install` is for initial setup. Managed copied/profile files that are already installed are left alone.
+`install` is for initial setup. Managed copied/profile files that are already installed are left alone. Use `--all` on Linux or `-All` on Windows to select every component.
 
 `reinstall` reapplies the repository's current configuration. This is the normal command after changing a copied configuration or pulling such changes from Git.
 
@@ -217,7 +218,7 @@ powershell/
 └── profile.ps1
 ```
 
-Setup manages the Current User/All Hosts PowerShell profile as a small shim that dot-sources the repository's `powershell/profile.ps1`.
+The Windows setup entry point manages the Current User/All Hosts PowerShell profile as a small shim that dot-sources the repository's `powershell/profile.ps1`.
 
 The profile configures PSReadLine with:
 
@@ -262,7 +263,7 @@ Linux/WSL prerequisites for the core Stow-managed configuration:
 - GNU Stow
 - Vim, if using the `vim` component
 
-Optional Linux components require their corresponding applications.
+The optional Linux `vscode` component requires VS Code and its `code` CLI.
 
 Windows setup requires PowerShell 7. Git, VS Code, and Windows Terminal should be installed for their respective components.
 
@@ -271,7 +272,7 @@ Clone the repository and inspect available components:
 ```sh
 git clone git@github.com:joshuabisdorf/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-./setup.sh list
+./setup-linux.sh list
 ```
 
 On Windows:
@@ -279,7 +280,7 @@ On Windows:
 ```powershell
 git clone https://github.com/joshuabisdorf/dotfiles.git $HOME\dotfiles
 cd $HOME\dotfiles
-.\setup.ps1 list
+.\setup-windows.ps1 list
 ```
 
 ## CI

@@ -35,12 +35,12 @@ jobs:
 
       - name: Validate Bash syntax
         run: |
-          bash -n setup.sh
+          bash -n setup-linux.sh
           bash -n bash/.bashrc
 
       - name: Run ShellCheck
         run: |
-          shellcheck setup.sh
+          shellcheck setup-linux.sh
           shellcheck bash/.bashrc
 
       - name: Validate Git configuration
@@ -68,17 +68,17 @@ jobs:
       - name: Verify Linux setup interface
         shell: bash
         run: |
-          output="$(./setup.sh list)"
+          output="$(./setup-linux.sh list)"
           grep -q '^git ' <<< "$output"
           grep -q '^bash ' <<< "$output"
           grep -q '^readline ' <<< "$output"
           grep -q '^vim ' <<< "$output"
           grep -q '^vscode ' <<< "$output"
-          grep -q '^powershell ' <<< "$output"
-          grep -q '^all ' <<< "$output"
+          ! grep -q '^powershell ' <<< "$output"
+          ! grep -q '^all ' <<< "$output"
 
           set +e
-          output="$(./setup.sh install not-a-component --dry-run 2>&1)"
+          output="$(./setup-linux.sh install not-a-component --dry-run 2>&1)"
           status=$?
           set -e
 
@@ -91,7 +91,7 @@ jobs:
           export HOME="$(mktemp -d)"
           export XDG_CONFIG_HOME="$HOME/.config"
 
-          ./setup.sh install all --dry-run
+          ./setup-linux.sh install --all --dry-run
 
           test ! -e "$HOME/.gitconfig"
           test ! -e "$HOME/.bashrc"
@@ -104,7 +104,7 @@ jobs:
         run: |
           export HOME="$(mktemp -d)"
 
-          ./setup.sh install git bash readline vim
+          ./setup-linux.sh install git bash readline vim
 
           test -L "$HOME/.gitconfig"
           test -L "$HOME/.bashrc"
@@ -116,14 +116,14 @@ jobs:
           test "$(git config --file "$HOME/.gitconfig" --get fetch.prune)" = "true"
           test "$(git config --file "$HOME/.gitconfig" --get push.autoSetupRemote)" = "true"
 
-          ./setup.sh reinstall git bash readline vim
+          ./setup-linux.sh reinstall git bash readline vim
 
           test -L "$HOME/.gitconfig"
           test -L "$HOME/.bashrc"
           test -L "$HOME/.inputrc"
           test -L "$HOME/.vimrc"
 
-          ./setup.sh uninstall git bash readline vim
+          ./setup-linux.sh uninstall git bash readline vim
 
           test ! -e "$HOME/.gitconfig"
           test ! -e "$HOME/.bashrc"
@@ -143,6 +143,8 @@ jobs:
 
       - name: Verify obsolete setup scripts are absent
         run: |
+          test ! -e setup.sh
+          test ! -e setup.ps1
           test ! -e install.sh
           test ! -e stow-packages.txt
           test ! -e vscode/install-settings.sh
@@ -217,12 +219,12 @@ jobs:
       - name: Verify Windows setup interface
         shell: pwsh
         run: |
-          $output = .\setup.ps1 list | Out-String
+          $output = .\setup-windows.ps1 list | Out-String
           if ($output -notmatch "(?m)^git\s") { throw "git component missing" }
           if ($output -notmatch "(?m)^powershell\s") { throw "powershell component missing" }
           if ($output -notmatch "(?m)^vscode\s") { throw "vscode component missing" }
           if ($output -notmatch "(?m)^terminal\s") { throw "terminal component missing" }
-          if ($output -notmatch "(?m)^all\s") { throw "all component missing" }
+          if ($output -match "(?m)^all\s") { throw "all must be a selector flag, not a component" }
 
       - name: Verify Windows all-components dry run
         shell: pwsh
@@ -232,7 +234,7 @@ jobs:
           New-Item -ItemType Directory -Path $env:APPDATA -Force | Out-Null
           New-Item -ItemType Directory -Path $env:LOCALAPPDATA -Force | Out-Null
 
-          .\setup.ps1 install all -DryRun
+          .\setup-windows.ps1 install -All -DryRun
 
           if (Test-Path (Join-Path $env:APPDATA "Code\User\settings.json")) {
             throw "VS Code settings changed during dry run."
@@ -245,6 +247,8 @@ jobs:
         shell: pwsh
         run: |
           $obsolete = @(
+            "setup.sh",
+            "setup.ps1",
             "install.sh",
             "stow-packages.txt",
             "vscode/install-settings.sh",
