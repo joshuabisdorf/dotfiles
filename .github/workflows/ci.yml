@@ -184,4 +184,10 @@ jobs:
 
       - name: Verify Windows top-level dry run
         shell: pwsh
-        run: .\setup.ps1 -DryRun
+        run: |
+          $env:APPDATA = Join-Path $env:RUNNER_TEMP "dotfiles-appdata"
+          $env:LOCALAPPDATA = Join-Path $env:RUNNER_TEMP "dotfiles-localappdata"
+          New-Item -ItemType Directory -Path $env:APPDATA -Force | Out-Null
+          New-Item -ItemType Directory -Path $env:LOCALAPPDATA -Force | Out-Null
+
+          .\setup.ps1 -DryRun
