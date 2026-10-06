@@ -182,6 +182,12 @@ jobs:
             }
           }
 
+      - name: Prepare PowerShell prompt test repository
+        shell: pwsh
+        run: |
+          $promptRepo = Join-Path $env:RUNNER_TEMP "prompt-repo"
+          git init --initial-branch=prompt-test $promptRepo
+
       - name: Verify PowerShell profile defaults
         shell: pwsh
         run: |
@@ -218,6 +224,19 @@ jobs:
 
           if ($tabHandler.Count -ne 1 -or $tabHandler[0].Function -ne "Complete") {
             throw "Tab must use Bash-like Complete behavior."
+          }
+
+          $promptRepo = Join-Path $env:RUNNER_TEMP "prompt-repo"
+          Push-Location $promptRepo
+          try {
+            $gitPromptText = prompt
+          }
+          finally {
+            Pop-Location
+          }
+
+          if ($gitPromptText -notlike "* (prompt-test)*") {
+            throw "PowerShell prompt must show the Git branch on the first prompt in a repository."
           }
 
           Push-Location $HOME
