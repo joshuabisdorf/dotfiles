@@ -182,6 +182,35 @@ jobs:
             }
           }
 
+      - name: Verify PowerShell profile defaults
+        shell: pwsh
+        run: |
+          . ./powershell/profile.ps1
+
+          if ($PSStyle.FileInfo.Directory -ne $PSStyle.Foreground.BrightBlue) {
+            throw "PowerShell directories must be bright blue."
+          }
+          if ($PSStyle.FileInfo.Executable -ne $PSStyle.Foreground.BrightGreen) {
+            throw "PowerShell executables must be bright green."
+          }
+          if ($PSStyle.FileInfo.SymbolicLink -ne $PSStyle.Foreground.Cyan) {
+            throw "PowerShell symbolic links must be cyan."
+          }
+          if ($PSStyle.FileInfo.Extension[".json"] -ne $PSStyle.Foreground.Yellow) {
+            throw "JSON files must be yellow."
+          }
+          if ($PSStyle.FileInfo.Extension[".zip"] -ne $PSStyle.Foreground.Red) {
+            throw "Archives must be red."
+          }
+
+          $readLine = Get-PSReadLineOption
+          if (-not $readLine.StringColor) {
+            throw "PSReadLine string color must be configured."
+          }
+          if (-not $readLine.VariableColor) {
+            throw "PSReadLine variable color must be configured."
+          }
+
       - name: Validate JSON settings
         shell: pwsh
         run: |

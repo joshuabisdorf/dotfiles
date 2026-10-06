@@ -142,7 +142,7 @@ Portable Git defaults include:
 - `git lg` shows a compact decorated commit graph;
 - `~/.gitconfig.local` is included for identity and machine-specific settings.
 
-On Linux/WSL, `git/.gitconfig` is linked to `~/.gitconfig` with GNU Stow. On Windows, `setup.ps1` copies the same file to `~/.gitconfig` and tracks ownership with `~/.gitconfig.dotfiles-managed`.
+On Linux/WSL, `git/.gitconfig` is linked to `~/.gitconfig` with GNU Stow. On Windows, `setup-windows.ps1` copies the same file to `~/.gitconfig` and tracks ownership with `~/.gitconfig.dotfiles-managed`.
 
 Keep personal identity outside the repository:
 
@@ -224,7 +224,19 @@ The profile configures PSReadLine with:
 
 - 10,000 history entries;
 - duplicate suppression during recall;
-- Up/Down prefix history search.
+- Up/Down prefix history search;
+- restrained syntax colors for commands, parameters, strings, variables, numbers, comments, and related tokens.
+
+PowerShell file listings use conventional terminal distinctions:
+
+- directories are bright blue;
+- executables are bright green;
+- symbolic links are cyan;
+- PowerShell files are cyan;
+- JSON/YAML/TOML/INI files are yellow;
+- Markdown files are green;
+- common archive formats are red;
+- ordinary files keep the terminal's default foreground color.
 
 Machine-specific PowerShell configuration can live in `profile.local.ps1` beside the Current User/All Hosts profile.
 
