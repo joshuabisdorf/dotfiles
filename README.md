@@ -225,6 +225,7 @@ The profile configures PSReadLine with:
 - 10,000 history entries;
 - duplicate suppression during recall;
 - Up/Down prefix history search;
+- Bash-like Tab completion that expands the longest unambiguous match instead of cycling immediately to the first candidate;
 - restrained syntax colors for commands, parameters, strings, variables, numbers, comments, and related tokens.
 
 PowerShell file listings use conventional terminal distinctions:
