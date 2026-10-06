@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/terminal-profiles-schema",
-  "defaultProfile": "PowerShell",
+  "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
   "copyFormatting": "none",
   "profiles": {
     "defaults": {
@@ -16,6 +16,13 @@
       "padding": "8",
       "useAcrylic": false
     },
-    "list": []
+    "list": [
+      {
+        "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+        "hidden": false,
+        "name": "PowerShell",
+        "source": "Windows.Terminal.PowershellCore"
+      }
+    ]
   }
 }
