@@ -180,7 +180,35 @@ jobs:
         shell: pwsh
         run: |
           Get-Content -Raw vscode/settings.json | ConvertFrom-Json | Out-Null
-          Get-Content -Raw windows-terminal/settings.json | ConvertFrom-Json | Out-Null
+
+          $terminal = Get-Content -Raw windows-terminal/settings.json | ConvertFrom-Json
+          if ($terminal.defaultProfile -ne "PowerShell") {
+            throw "Windows Terminal default profile must be PowerShell."
+          }
+          if ($terminal.profiles.defaults.font.face -ne "Cascadia Mono") {
+            throw "Windows Terminal font must be Cascadia Mono."
+          }
+          if ([int]$terminal.profiles.defaults.font.size -ne 12) {
+            throw "Windows Terminal font size must be 12."
+          }
+          if ($terminal.profiles.defaults.colorScheme -ne "Campbell") {
+            throw "Windows Terminal color scheme must be Campbell."
+          }
+          if ($terminal.profiles.defaults.cursorShape -ne "filledBox") {
+            throw "Windows Terminal cursor must be a filled box."
+          }
+          if ([int]$terminal.profiles.defaults.opacity -ne 100) {
+            throw "Windows Terminal must be fully opaque."
+          }
+          if ($terminal.profiles.defaults.useAcrylic -ne $false) {
+            throw "Windows Terminal acrylic must be disabled."
+          }
+          if ($terminal.profiles.defaults.padding -ne "8") {
+            throw "Windows Terminal padding must be 8."
+          }
+          if ($terminal.profiles.defaults.PSObject.Properties.Name -contains "startingDirectory") {
+            throw "Windows Terminal must not globally override startingDirectory."
+          }
 
       - name: Verify Windows top-level dry run
         shell: pwsh

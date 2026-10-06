@@ -1,9 +1,20 @@
 {
   "$schema": "https://aka.ms/terminal-profiles-schema",
+  "defaultProfile": "PowerShell",
   "copyFormatting": "none",
   "profiles": {
     "defaults": {
-      "historySize": 10000
+      "colorScheme": "Campbell",
+      "cursorShape": "filledBox",
+      "font": {
+        "face": "Cascadia Mono",
+        "size": 12,
+        "weight": "normal"
+      },
+      "historySize": 10000,
+      "opacity": 100,
+      "padding": "8",
+      "useAcrylic": false
     },
     "list": []
   }
