@@ -143,7 +143,7 @@ if ($psReadLine) {
         InlinePrediction = "DarkGray"
     }
 
-    Set-PSReadLineKeyHandler -Key Tab -BriefDescription "BashLikeDirectoryComplete" -Description "Case-sensitive cd completion; otherwise use normal PowerShell completion." -ScriptBlock {
+    Set-PSReadLineKeyHandler -Key Tab -BriefDescription "AcceptSuggestionOrComplete" -Description "Accept inline prediction first, then use Bash-like directory or normal PowerShell completion." -ScriptBlock {
         param($key, $arg)
 
         $line = $null
@@ -152,6 +152,25 @@ if ($psReadLine) {
             [ref]$line,
             [ref]$cursor
         )
+
+        $beforeSuggestionLine = $line
+        $beforeSuggestionCursor = $cursor
+
+        [Microsoft.PowerShell.PSConsoleReadLine]::AcceptSuggestion($key, $arg)
+
+        $line = $null
+        [int]$cursor = 0
+        [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState(
+            [ref]$line,
+            [ref]$cursor
+        )
+
+        if (
+            $line -ne $beforeSuggestionLine -or
+            $cursor -ne $beforeSuggestionCursor
+        ) {
+            return
+        }
 
         $completion = Get-DotfilesDirectoryCompletion -Line $line -Cursor $cursor
 

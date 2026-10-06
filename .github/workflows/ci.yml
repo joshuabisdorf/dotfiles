@@ -225,8 +225,26 @@ jobs:
           if ($tabHandler.Count -ne 1) {
             throw "Tab must have exactly one PSReadLine handler."
           }
-          if ($tabHandler[0].Function -ne "BashLikeDirectoryComplete") {
-            throw "Tab must use the custom Bash-like directory completion handler."
+          if ($tabHandler[0].Function -ne "AcceptSuggestionOrComplete") {
+            throw "Tab must use the suggestion-first completion handler."
+          }
+
+          $profileText = Get-Content -Raw ./powershell/profile.ps1
+          $acceptSuggestionIndex = $profileText.IndexOf(
+            "[Microsoft.PowerShell.PSConsoleReadLine]::AcceptSuggestion"
+          )
+          $directoryCompletionIndex = $profileText.IndexOf(
+            '$completion = Get-DotfilesDirectoryCompletion'
+          )
+
+          if ($acceptSuggestionIndex -lt 0) {
+            throw "Tab handler must attempt to accept inline predictions."
+          }
+          if (
+            $directoryCompletionIndex -lt 0 -or
+            $acceptSuggestionIndex -gt $directoryCompletionIndex
+          ) {
+            throw "Inline predictions must take priority over directory completion."
           }
 
           $completionRoot = Join-Path $env:RUNNER_TEMP "completion-root"

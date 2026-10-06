@@ -225,7 +225,8 @@ The profile configures PSReadLine with:
 - 10,000 history entries;
 - duplicate suppression during recall;
 - Up/Down prefix history search;
-- Bash-like Tab completion for `cd`/`Set-Location`: directory matching is case-sensitive, avoids an unnecessary `.\\` prefix, and expands the longest unambiguous match;
+- Tab accepts the visible inline PSReadLine prediction first, so a suggestion such as `git pull` can be accepted from a typed `git` prefix;
+- without an inline prediction, `cd`/`Set-Location` uses Bash-like directory completion: case-sensitive matching, no unnecessary `.\\` prefix, and longest-unambiguous-prefix expansion;
 - normal PowerShell completion remains available for commands, parameters, and other non-directory cases;
 - restrained syntax colors for commands, parameters, strings, variables, numbers, comments, and related tokens.
 
