@@ -165,22 +165,22 @@ function Set-ManagedCopy {
         }
 
         if (-not (Test-ManagedMarker -Path $markerFile -MarkerId $MarkerId)) {
-            throw "Refusing to remove unmanaged $Label: $Target"
+            throw "Refusing to remove unmanaged ${Label}: $Target"
         }
 
         if ($script:DryRun) {
-            Write-Host "Would remove managed $Label: $Target"
+            Write-Host "Would remove managed ${Label}: $Target"
             return
         }
 
         Remove-Item -LiteralPath $Target -Force -ErrorAction SilentlyContinue
         Remove-Item -LiteralPath $markerFile -Force -ErrorAction SilentlyContinue
-        Write-Host "Removed managed $Label: $Target"
+        Write-Host "Removed managed ${Label}: $Target"
         return
     }
 
     if (-not (Test-Path -LiteralPath $Source -PathType Leaf)) {
-        throw "Source file not found for $Label: $Source"
+        throw "Source file not found for ${Label}: $Source"
     }
 
     $managed = Test-ManagedMarker -Path $markerFile -MarkerId $MarkerId
@@ -191,11 +191,11 @@ function Set-ManagedCopy {
     }
 
     if ((Test-Path -LiteralPath $Target) -and -not $managed -and -not $script:Force) {
-        throw "Refusing to overwrite unmanaged $Label: $Target. Re-run with -Force to adopt it."
+        throw "Refusing to overwrite unmanaged ${Label}: $Target. Re-run with -Force to adopt it."
     }
 
     if ($script:DryRun) {
-        Write-Host "Would $Action $Label: $Source -> $Target"
+        Write-Host "Would $Action ${Label}: $Source -> $Target"
         return
     }
 
@@ -203,7 +203,7 @@ function Set-ManagedCopy {
     New-Item -ItemType Directory -Path $targetDirectory -Force | Out-Null
     Copy-Item -LiteralPath $Source -Destination $Target -Force
     Set-Content -LiteralPath $markerFile -Value @($MarkerId, $Source) -Encoding utf8
-    Write-Host "$($Action.Substring(0,1).ToUpper() + $Action.Substring(1))ed $Label: $Target"
+    Write-Host "$($Action.Substring(0,1).ToUpper() + $Action.Substring(1))ed ${Label}: $Target"
 }
 
 # Invoke-GitSetup
