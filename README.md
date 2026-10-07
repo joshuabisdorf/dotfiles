@@ -265,6 +265,8 @@ windows-terminal/
 The baseline keeps Windows Terminal close to a conventional Unix terminal while remaining native to Windows:
 
 - PowerShell 7's generated `PowerShell` profile is explicitly kept visible and set as the default profile;
+- the standard `Windows PowerShell` and `Command Prompt` profiles remain available in the new-tab menu;
+- dynamic profile generation remains enabled, so installed WSL distributions and other supported shells can still appear automatically;
 - Cascadia Mono at 12 points with normal weight;
 - the built-in Campbell dark color scheme;
 - a filled block cursor;
