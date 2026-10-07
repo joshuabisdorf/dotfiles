@@ -340,6 +340,35 @@ jobs:
           if ($powerShellProfile[0].source -ne "Windows.Terminal.PowershellCore") {
             throw "Windows Terminal PowerShell 7 profile must use the PowerShell Core dynamic source."
           }
+
+          $windowsPowerShellGuid = "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}"
+          $commandPromptGuid = "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}"
+
+          $windowsPowerShellProfile = @(
+            $terminal.profiles.list |
+              Where-Object { $_.guid -eq $windowsPowerShellGuid }
+          )
+          $commandPromptProfile = @(
+            $terminal.profiles.list |
+              Where-Object { $_.guid -eq $commandPromptGuid }
+          )
+
+          if ($windowsPowerShellProfile.Count -ne 1) {
+            throw "Windows Terminal must retain the Windows PowerShell profile."
+          }
+          if ($windowsPowerShellProfile[0].hidden -ne $false) {
+            throw "Windows PowerShell must remain visible."
+          }
+          if ($commandPromptProfile.Count -ne 1) {
+            throw "Windows Terminal must retain the Command Prompt profile."
+          }
+          if ($commandPromptProfile[0].hidden -ne $false) {
+            throw "Command Prompt must remain visible."
+          }
+          if ($terminal.PSObject.Properties.Name -contains "disabledProfileSources") {
+            throw "Windows Terminal dynamic profile sources must remain enabled."
+          }
+
           if ($terminal.profiles.defaults.font.face -ne "Cascadia Mono") {
             throw "Windows Terminal font must be Cascadia Mono."
           }
