@@ -11,17 +11,12 @@ $script:TerminalMarker = "joshuabisdorf/dotfiles:windows-terminal-settings"
 $script:PowerShellMarker = "# Managed by joshuabisdorf/dotfiles: powershell-profile"
 $script:Components = @("git", "powershell", "vscode", "terminal")
 
-# Show-Usage
-# Requires:
-#   - None.
-# Modifies:
-#   - Standard output.
-# Effects:
-#   - Prints the public Windows setup interface.
-# Inputs:
-#   - None.
-# Outputs:
-#   - Usage text on standard output.
+<#
+.SYNOPSIS
+    Display the supported Windows setup commands.
+.OUTPUTS
+    System.String - Help text.
+#>
 function Show-Usage {
     @"
 Usage:
@@ -48,17 +43,12 @@ Run ".\setup-windows.ps1 list" to see components.
 "@
 }
 
-# Show-Components
-# Requires:
-#   - None.
-# Modifies:
-#   - Standard output.
-# Effects:
-#   - Describes every Windows component exposed by setup.ps1.
-# Inputs:
-#   - Available applications for availability notes.
-# Outputs:
-#   - Component names, descriptions, and availability notes.
+<#
+.SYNOPSIS
+    List supported Windows components and availability.
+.OUTPUTS
+    System.String - Component descriptions.
+#>
 function Show-Components {
     $gitAvailability = if (Get-Command git -ErrorAction SilentlyContinue) { "" } else { " (git is not currently available)" }
     $vscodeAvailability = if (Get-Command code -ErrorAction SilentlyContinue) { "" } else { " (code CLI not currently available)" }
@@ -71,19 +61,16 @@ function Show-Components {
     "{0,-12} {1}" -f "terminal", "Windows Terminal settings$terminalAvailability"
 }
 
-# Test-ManagedMarker
-# Requires:
-#   - Path is a marker file path.
-#   - MarkerId is the expected first-line marker.
-# Modifies:
-#   - Nothing.
-# Effects:
-#   - Tests whether a sidecar marker identifies a managed copied file.
-# Inputs:
-#   - Path: marker file path.
-#   - MarkerId: expected marker identifier.
-# Outputs:
-#   - Boolean management status.
+<#
+.SYNOPSIS
+    Test a sidecar file against this repository's ownership marker.
+.PARAMETER Path
+    Path to the sidecar marker.
+.PARAMETER MarkerId
+    Expected marker identifier.
+.OUTPUTS
+    System.Boolean - Whether the marker matches.
+#>
 function Test-ManagedMarker {
     param(
         [Parameter(Mandatory)]
@@ -101,17 +88,14 @@ function Test-ManagedMarker {
     return $firstLine -eq $MarkerId
 }
 
-# Test-ManagedPowerShellProfile
-# Requires:
-#   - Path is a PowerShell profile path.
-# Modifies:
-#   - Nothing.
-# Effects:
-#   - Tests whether the first line identifies a profile shim managed by this repository.
-# Inputs:
-#   - Path: PowerShell profile path.
-# Outputs:
-#   - Boolean management status.
+<#
+.SYNOPSIS
+    Test whether the profile is a repository-managed shim.
+.PARAMETER Path
+    PowerShell Current User/All Hosts profile path.
+.OUTPUTS
+    System.Boolean - Whether the file has the managed shim marker.
+#>
 function Test-ManagedPowerShellProfile {
     param(
         [Parameter(Mandatory)]
@@ -126,21 +110,22 @@ function Test-ManagedPowerShellProfile {
     return $firstLine -eq $script:PowerShellMarker
 }
 
-# Set-ManagedCopy
-# Requires:
-#   - Source exists for install/reinstall operations.
-# Modifies:
-#   - Target and its sidecar ownership marker unless DryRun is enabled.
-# Effects:
-#   - Installs, reinstalls, or removes a copied configuration safely.
-# Inputs:
-#   - Action: install, reinstall, or uninstall.
-#   - Source: repository source file.
-#   - Target: user configuration target.
-#   - MarkerId: ownership marker identifier.
-#   - Label: human-readable component label.
-# Outputs:
-#   - Status or safety errors.
+<#
+.SYNOPSIS
+    Manage a copied settings file and sidecar ownership marker.
+.DESCRIPTION
+    Refuses to overwrite or delete an unmanaged target. Force allows adopting a target on install/reinstall without backing it up. Dry runs do not modify files.
+.PARAMETER Action
+    Install, reinstall, or uninstall.
+.PARAMETER Source
+    Repository source path.
+.PARAMETER Target
+    User destination path.
+.PARAMETER MarkerId
+    Expected marker identifier.
+.PARAMETER Label
+    Display label for messages.
+#>
 function Set-ManagedCopy {
     param(
         [Parameter(Mandatory)]
@@ -210,17 +195,14 @@ function Set-ManagedCopy {
     Write-Host "$($Action.Substring(0,1).ToUpper() + $Action.Substring(1))ed ${Label}: $Target"
 }
 
-# Invoke-GitSetup
-# Requires:
-#   - git/.gitconfig exists in the repository.
-# Modifies:
-#   - ~/.gitconfig and its ownership marker unless DryRun is enabled.
-# Effects:
-#   - Manages the shared Git configuration on native Windows.
-# Inputs:
-#   - Action: install, reinstall, or uninstall.
-# Outputs:
-#   - Git configuration status.
+<#
+.SYNOPSIS
+    Manage the shared Git user configuration.
+.DESCRIPTION
+    Uses a managed copy of git/.gitconfig at the user's ~/.gitconfig.
+.PARAMETER Action
+    Install, reinstall, or uninstall Git settings.
+#>
 function Invoke-GitSetup {
     param(
         [Parameter(Mandatory)]
@@ -233,18 +215,14 @@ function Invoke-GitSetup {
     Set-ManagedCopy -Action $Action -Source $source -Target $target -MarkerId $script:GitMarker -Label "Git configuration"
 }
 
-# Invoke-PowerShellSetup
-# Requires:
-#   - PowerShell 7 is running.
-#   - powershell/profile.ps1 exists in the repository.
-# Modifies:
-#   - Current User/All Hosts PowerShell profile unless DryRun is enabled.
-# Effects:
-#   - Installs a managed shim, reinstalls it, or removes it.
-# Inputs:
-#   - Action: install, reinstall, or uninstall.
-# Outputs:
-#   - PowerShell profile status.
+<#
+.SYNOPSIS
+    Manage the PowerShell Current User/All Hosts profile shim.
+.DESCRIPTION
+    The marked shim dot-sources the repository profile. Uninstall deletes only the marked shim; Force adoption overwrites without a backup.
+.PARAMETER Action
+    Install, reinstall, or uninstall the shim.
+#>
 function Invoke-PowerShellSetup {
     param(
         [Parameter(Mandatory)]
@@ -308,18 +286,14 @@ function Invoke-PowerShellSetup {
     Write-Host "$($Action.Substring(0,1).ToUpper() + $Action.Substring(1))ed PowerShell profile shim: $targetProfile"
 }
 
-# Invoke-VSCodeExtensions
-# Requires:
-#   - vscode/extensions.txt exists.
-#   - VS Code's code CLI is available unless DryRun is enabled.
-# Modifies:
-#   - Installed VS Code extensions unless DryRun is enabled.
-# Effects:
-#   - Installs, force-reinstalls, or removes extensions in the repository manifest.
-# Inputs:
-#   - Action: install, reinstall, or uninstall.
-# Outputs:
-#   - Extension status.
+<#
+.SYNOPSIS
+    Apply VS Code extension actions from the manifest.
+.DESCRIPTION
+    Uninstall removes listed extensions even if they were previously installed outside dotfiles.
+.PARAMETER Action
+    Install, reinstall, or uninstall listed extensions.
+#>
 function Invoke-VSCodeExtensions {
     param(
         [Parameter(Mandatory)]
@@ -389,17 +363,14 @@ function Invoke-VSCodeExtensions {
     }
 }
 
-# Invoke-VSCodeSetup
-# Requires:
-#   - vscode/settings.json and vscode/extensions.txt exist.
-# Modifies:
-#   - VS Code user settings and extensions unless DryRun is enabled.
-# Effects:
-#   - Manages VS Code as one public setup component.
-# Inputs:
-#   - Action: install, reinstall, or uninstall.
-# Outputs:
-#   - VS Code settings and extension status.
+<#
+.SYNOPSIS
+    Manage Windows VS Code user settings and extensions.
+.DESCRIPTION
+    Settings are copied and tracked with a marker; extensions are managed using the code CLI.
+.PARAMETER Action
+    Install, reinstall, or uninstall VS Code configuration.
+#>
 function Invoke-VSCodeSetup {
     param(
         [Parameter(Mandatory)]
@@ -413,17 +384,14 @@ function Invoke-VSCodeSetup {
     Invoke-VSCodeExtensions -Action $Action
 }
 
-# Get-WindowsTerminalSettingsPath
-# Requires:
-#   - LOCALAPPDATA is set.
-# Modifies:
-#   - Nothing.
-# Effects:
-#   - Selects the stable packaged or unpackaged Windows Terminal settings path.
-# Inputs:
-#   - Current user's LOCALAPPDATA.
-# Outputs:
-#   - Windows Terminal settings.json path.
+<#
+.SYNOPSIS
+    Find the packaged or unpackaged Windows Terminal settings path.
+.DESCRIPTION
+    Uses an existing packaged directory first, then an unpackaged directory; otherwise defaults to the packaged path.
+.OUTPUTS
+    System.String - User settings.json path.
+#>
 function Get-WindowsTerminalSettingsPath {
     if (-not $env:LOCALAPPDATA) {
         throw "LOCALAPPDATA is not set."
@@ -443,17 +411,12 @@ function Get-WindowsTerminalSettingsPath {
     return $packaged
 }
 
-# Invoke-TerminalSetup
-# Requires:
-#   - windows-terminal/settings.json exists.
-# Modifies:
-#   - Windows Terminal settings and ownership marker unless DryRun is enabled.
-# Effects:
-#   - Installs, reinstalls, or removes the repository's Terminal configuration.
-# Inputs:
-#   - Action: install, reinstall, or uninstall.
-# Outputs:
-#   - Windows Terminal settings status.
+<#
+.SYNOPSIS
+    Manage Windows Terminal settings and their ownership marker.
+.PARAMETER Action
+    Install, reinstall, or uninstall Terminal settings.
+#>
 function Invoke-TerminalSetup {
     param(
         [Parameter(Mandatory)]
@@ -466,19 +429,18 @@ function Invoke-TerminalSetup {
     Set-ManagedCopy -Action $Action -Source $source -Target $target -MarkerId $script:TerminalMarker -Label "Windows Terminal settings"
 }
 
-# Invoke-Component
-# Requires:
-#   - Component is a known public component.
-# Modifies:
-#   - Selected user configuration unless DryRun is enabled.
-# Effects:
-#   - Dispatches one public component and handles optional application availability for "all".
-# Inputs:
-#   - Action: install, reinstall, or uninstall.
-#   - Component: component name.
-#   - SelectedAll: whether the request used all.
-# Outputs:
-#   - Component status or availability messages.
+<#
+.SYNOPSIS
+    Dispatch a selected Windows setup component.
+.DESCRIPTION
+    When -All is used, unavailable optional applications may be skipped; explicitly requested unavailable applications cause errors.
+.PARAMETER Action
+    Install, reinstall, or uninstall.
+.PARAMETER Component
+    Recognized component name.
+.PARAMETER SelectedAll
+    Whether -All was selected.
+#>
 function Invoke-Component {
     param(
         [Parameter(Mandatory)]
@@ -526,17 +488,14 @@ function Invoke-Component {
     }
 }
 
-# Parse-Arguments
-# Requires:
-#   - Script arguments are available through $args.
-# Modifies:
-#   - Script-scoped DryRun and Force flags.
-# Effects:
-#   - Parses the command, components, and flags with flags allowed in any position.
-# Inputs:
-#   - Raw script arguments.
-# Outputs:
-#   - PSCustomObject with Command and Requested component array.
+<#
+.SYNOPSIS
+    Parse Windows setup commands, components, and flags.
+.DESCRIPTION
+    Sets script-scoped DryRun, Force, and All flags; command-line flags may appear in any position.
+.OUTPUTS
+    PSCustomObject - Command and Requested component array.
+#>
 function Parse-Arguments {
     $command = $null
     $requested = @()
@@ -606,20 +565,12 @@ function Parse-Arguments {
     }
 }
 
-# Main
-# Requires:
-#   - PowerShell 7 for mutating operations.
-#   - Repository configuration files exist for selected components.
-# Modifies:
-#   - User configuration selected by the command unless DryRun is enabled.
-# Effects:
-#   - Provides the only native Windows setup entry point for listing and managing dotfiles.
-# Inputs:
-#   - list, install, reinstall, or uninstall command.
-#   - -All or one or more component names for mutating commands.
-#   - Optional -DryRun and -Force flags.
-# Outputs:
-#   - Setup status and safety errors.
+<#
+.SYNOPSIS
+    Validate the Windows setup CLI and run selected components.
+.DESCRIPTION
+    Requires PowerShell 7 for mutating operations. Rejects invalid selectors, -Force with uninstall, and unmanaged targets without explicit adoption.
+#>
 function Main {
     $parsed = Parse-Arguments
     $command = $parsed.Command

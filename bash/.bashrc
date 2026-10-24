@@ -35,18 +35,8 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# __dotfiles_git_context
-# Requires:
-#   - An interactive Bash shell.
-#   - Git on PATH to display repository context; otherwise it returns silently.
-# Modifies:
-#   - Nothing.
-# Effects:
-#   - Inspects the current directory for a Git branch or detached HEAD.
-# Inputs:
-#   - The shell's current working directory.
-# Outputs:
-#   - " (branch)" or " (@commit)" on standard output when inside a Git repository.
+# Print branch or detached-HEAD context for the prompt.
+# Behavior: Prints ' (branch)', ' (@commit)', or nothing outside Git. Leaves shell state unchanged.
 __dotfiles_git_context() {
   command -v git >/dev/null 2>&1 || return 0
 
