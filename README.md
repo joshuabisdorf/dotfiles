@@ -1,6 +1,6 @@
 # dotfiles
 
-Portable user configuration for a consistent development environment across Linux, WSL, and Windows where applicable.
+Portable user configuration for a consistent development environment across Linux, WSL, and native Windows. This repository configures existing applications; it does not install system packages or provision a machine.
 
 ## Goals
 
@@ -10,6 +10,40 @@ Portable user configuration for a consistent development environment across Linu
 - Keep personal, machine-specific, and secret values outside the repository.
 - Keep the setup interface small: one entry point for Linux/WSL and one for Windows.
 - Make installation, reinstallation, dry runs, and removal explicit and reversible.
+
+## Quick start
+
+Use a normal user account, not an elevated shell. Install the host tools you intend to
+configure, inspect any existing configuration, and preview the operation before writing files.
+
+On Linux or WSL:
+
+```sh
+git clone https://github.com/joshuabisdorf/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+./setup-linux.sh list
+./setup-linux.sh install --all --dry-run
+./setup-linux.sh install --all
+```
+
+On native Windows, open **PowerShell 7** (`pwsh`):
+
+```powershell
+git clone https://github.com/joshuabisdorf/dotfiles.git "$HOME/dotfiles"
+Set-Location "$HOME/dotfiles"
+.\setup-windows.ps1 list
+.\setup-windows.ps1 install -All -DryRun
+.\setup-windows.ps1 install -All
+```
+
+An `--all` / `-All` install processes all *applicable* components. A missing
+optional application may be skipped; explicitly selecting an unavailable component fails.
+Under WSL, manage Windows-side VS Code from the Windows setup entry point.
+
+**Back up existing settings before adopting them.** The scripts do not
+automatically create backups, and `--force` / `-Force` can replace unmanaged
+copied files or a PowerShell profile shim. See the
+[maintenance and recovery guide](docs/MAINTENANCE.md).
 
 ## Setup interface
 
@@ -119,7 +153,7 @@ Available Windows components are:
 
 Use `-All` to select every Windows component. `--all` is also accepted for symmetry with Linux. The selector is not a component name.
 
-Use `-Force` on Windows or `--force` on Linux when explicitly adopting an existing unmanaged copied/profile configuration. Setup otherwise refuses to overwrite unrelated user files.
+Use `-Force` on Windows or `--force` on Linux only when deliberately adopting an existing unmanaged **copied** configuration or PowerShell profile shim. These flags do not bypass GNU Stow's symlink conflict checks. The scripts do not make backups; inspect and save existing settings first.
 
 ## Install vs. reinstall
 
@@ -129,7 +163,24 @@ Use `-Force` on Windows or `--force` on Linux when explicitly adopting an existi
 
 On Linux, GNU Stow components use `--stow` for install and `--restow` for reinstall. Because Stow creates symlinks, edits to existing linked configuration files are already visible immediately.
 
-On Windows, Git, VS Code, and Windows Terminal configuration is copied into the applications' normal user locations and tracked with small sidecar ownership markers, so `reinstall` refreshes those copies. The PowerShell profile itself is a small managed shim that dot-sources the repository profile directly.
+On Windows, Git, VS Code, and Windows Terminal configuration is copied into the applications' normal user locations and tracked with small `.dotfiles-managed` sidecar ownership markers, so `reinstall` refreshes those copies. On native Linux, the VS Code settings file is likewise copied and marked. The Windows PowerShell profile itself is a small managed shim that dot-sources the repository profile directly.
+
+### Safe removal and recovery
+
+`uninstall` removes managed GNU Stow links, tracked copied settings, and the
+managed Windows PowerShell profile shim. It refuses to delete unrelated
+configuration. **VS Code extensions are different:** extensions are not
+individually ownership-tracked, so uninstalling the VS Code component also
+removes extensions listed in `vscode/extensions.txt`, even if you installed
+those extensions independently. Preview the operation and select only the
+components you want to remove.
+
+A Stow package can fail to install when an unmanaged file already exists at
+the target path. Back up or move the conflicting file yourself and retry;
+`--force` does **not** override Stow conflicts.
+
+For full paths, troubleshooting, and non-destructive recovery procedures, see
+[docs/MAINTENANCE.md](docs/MAINTENANCE.md).
 
 ## Git
 
@@ -295,7 +346,7 @@ Windows setup requires PowerShell 7. Git, VS Code, and Windows Terminal should b
 Clone the repository and inspect available components:
 
 ```sh
-git clone git@github.com:joshuabisdorf/dotfiles.git ~/dotfiles
+git clone https://github.com/joshuabisdorf/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ./setup-linux.sh list
 ```
@@ -308,13 +359,25 @@ cd $HOME\dotfiles
 .\setup-windows.ps1 list
 ```
 
+## Maintenance and documentation conventions
+
+The [maintenance guide](docs/MAINTENANCE.md) documents application targets,
+the symlink/copy ownership model, safety behavior, and recovery. The
+[documentation style guide](STYLE.md) describes the repository's language-specific
+conventions: PowerShell comment-based help and concise Bash/ShellCheck-friendly
+function comments. No generated documentation build is required.
+
+Make runtime and configuration changes separately from documentation-only
+changes when feasible. Verify the documented command syntax against the setup
+scripts and run their dry runs before performing live installation.
+
 ## CI
 
 CI validates both public setup entry points.
 
 Linux validation covers Bash syntax, ShellCheck, Git and Vim configuration, strict JSON settings, component listing, dry runs, Stow install/reinstall/uninstall behavior, and Bash defaults.
 
-Windows validation parses PowerShell, validates JSON settings, checks the component interface, exercises the Windows all-components dry run, and verifies that obsolete component installer scripts are absent.
+Windows validation parses PowerShell, validates JSON settings, checks the component interface, tests profile/prompt behavior and terminal defaults, exercises the Windows all-components dry run, and verifies that obsolete component installer scripts are absent.
 
 ## Security
 

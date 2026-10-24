@@ -1,16 +1,17 @@
 # Portable PowerShell defaults shared across hosts.
 
-# Get-DotfilesDirectoryCompletion
-# Requires:
-#   - A filesystem location.
-# Modifies:
-#   - Nothing.
-# Effects:
-#   - Computes Bash-like, case-sensitive directory completion for cd/Set-Location.
-# Inputs:
-#   - The current command line and cursor position.
-# Outputs:
-#   - An object describing whether completion was handled and any replacement text.
+<#
+.SYNOPSIS
+    Compute case-sensitive directory completion for cd and Set-Location.
+.DESCRIPTION
+    Handles unquoted directory names at the end of a filesystem command; other inputs are left to default PowerShell completion.
+.PARAMETER Line
+    Command line entered at the prompt.
+.PARAMETER Cursor
+    Zero-based cursor position.
+.OUTPUTS
+    PSCustomObject - Handled, Start, Length, and replacement Text.
+#>
 function Get-DotfilesDirectoryCompletion {
     param(
         [Parameter(Mandatory)]
@@ -213,17 +214,14 @@ foreach ($extension in @(".zip", ".7z", ".tar", ".gz", ".tgz", ".bz2", ".xz")) {
     $PSStyle.FileInfo.Extension[$extension] = $PSStyle.Foreground.Red
 }
 
-# Get-DotfilesGitContext
-# Requires:
-#   - Git on PATH to display repository context; otherwise returns an empty string.
-# Modifies:
-#   - Nothing.
-# Effects:
-#   - Inspects the current directory for a Git branch or detached HEAD.
-# Inputs:
-#   - The shell's current working directory.
-# Outputs:
-#   - " (branch)", " (@commit)", or an empty string.
+<#
+.SYNOPSIS
+    Render Git branch or detached-HEAD context for the prompt.
+.DESCRIPTION
+    Returns no context if Git is unavailable or the location is not a repository.
+.OUTPUTS
+    System.String - Context or an empty string.
+#>
 function Get-DotfilesGitContext {
     if (-not (Get-Command git -CommandType Application -ErrorAction SilentlyContinue)) {
         return ""
@@ -251,17 +249,12 @@ function Get-DotfilesGitContext {
     return ""
 }
 
-# Get-DotfilesPromptPath
-# Requires:
-#   - None.
-# Modifies:
-#   - Nothing.
-# Effects:
-#   - Formats the current location and shortens the user's home directory to "~".
-# Inputs:
-#   - The shell's current working directory and HOME.
-# Outputs:
-#   - The display path for the prompt.
+<#
+.SYNOPSIS
+    Shorten the user's home prefix in the prompt path.
+.OUTPUTS
+    System.String - Display path.
+#>
 function Get-DotfilesPromptPath {
     $path = (Get-Location).Path
 
@@ -277,17 +270,14 @@ function Get-DotfilesPromptPath {
     return $path
 }
 
-# prompt
-# Requires:
-#   - PowerShell 7 for PSStyle colors.
-# Modifies:
-#   - Preserves LASTEXITCODE after Git context lookup.
-# Effects:
-#   - Renders a Bash-like user@host path (git-context) prompt.
-# Inputs:
-#   - Current user, machine name, working directory, and Git state.
-# Outputs:
-#   - A colored "user@host ~/path (branch) > " prompt string.
+<#
+.SYNOPSIS
+    Render the Git-aware user@host PowerShell prompt.
+.DESCRIPTION
+    Restores global LASTEXITCODE after inspecting Git state.
+.OUTPUTS
+    System.String - Colorized prompt.
+#>
 function prompt {
     $previousExitCode = $global:LASTEXITCODE
 

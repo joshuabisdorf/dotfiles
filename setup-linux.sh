@@ -7,17 +7,8 @@ readonly VSCODE_MARKER='joshuabisdorf/dotfiles:vscode-settings'
 readonly -a STOW_COMPONENTS=(git bash readline vim)
 readonly -a COMPONENTS=(git bash readline vim vscode)
 
-# usage
-# Requires:
-#   - None.
-# Modifies:
-#   - Standard output.
-# Effects:
-#   - Prints the public Linux/WSL setup interface.
-# Inputs:
-#   - None.
-# Outputs:
-#   - Usage text on standard output.
+# Print the setup commands and options.
+# Behavior: Prints usage text to stdout.
 usage() {
   cat <<'EOF'
 Usage:
@@ -43,33 +34,15 @@ Run "./setup-linux.sh list" to see components.
 EOF
 }
 
-# is_wsl
-# Requires:
-#   - /proc/sys/kernel/osrelease when available.
-# Modifies:
-#   - Nothing.
-# Effects:
-#   - Detects whether the current Linux environment is WSL.
-# Inputs:
-#   - Kernel release metadata.
-# Outputs:
-#   - Exit status 0 under WSL; 1 otherwise.
+# Detect WSL from /proc/sys/kernel/osrelease.
+# Behavior: Returns 0 on WSL and 1 otherwise.
 is_wsl() {
   [[ -r /proc/sys/kernel/osrelease ]] &&
     grep -qi 'microsoft' /proc/sys/kernel/osrelease
 }
 
-# list_components
-# Requires:
-#   - None.
-# Modifies:
-#   - Standard output.
-# Effects:
-#   - Describes every Linux/WSL component exposed by setup.sh.
-# Inputs:
-#   - Current platform and available commands for availability notes.
-# Outputs:
-#   - Component names, descriptions, and availability notes.
+# List available Linux/WSL setup components.
+# Behavior: Prints availability notes for VS Code.
 list_components() {
   printf '%-12s %s\n' 'COMPONENT' 'DESCRIPTION'
   printf '%-12s %s\n' 'git' 'Git user configuration (~/.gitconfig via GNU Stow)'
@@ -87,17 +60,9 @@ list_components() {
 
 }
 
-# component_is_known
-# Requires:
-#   - $1 is a requested component name.
-# Modifies:
-#   - Nothing.
-# Effects:
-#   - Tests whether the requested component is part of the public interface.
-# Inputs:
-#   - $1: component name.
-# Outputs:
-#   - Exit status 0 when known; 1 otherwise.
+# Check whether a component name belongs to the public setup interface.
+# Arg: $1 - Requested component.
+# Behavior: Returns 0 for recognized components and 1 otherwise.
 component_is_known() {
   local requested="$1"
   local component
@@ -111,17 +76,9 @@ component_is_known() {
   return 1
 }
 
-# component_uses_stow
-# Requires:
-#   - $1 is a component name.
-# Modifies:
-#   - Nothing.
-# Effects:
-#   - Tests whether the component is managed through GNU Stow.
-# Inputs:
-#   - $1: component name.
-# Outputs:
-#   - Exit status 0 for a Stow component; 1 otherwise.
+# Check whether a component is managed using GNU Stow.
+# Arg: $1 - Requested component.
+# Behavior: Returns 0 for a Stow-managed component and 1 otherwise.
 component_uses_stow() {
   local requested="$1"
   local component
@@ -135,19 +92,10 @@ component_uses_stow() {
   return 1
 }
 
-# marker_is_managed
-# Requires:
-#   - $1 is a marker file path.
-#   - $2 is the marker identifier expected on the first line.
-# Modifies:
-#   - Nothing.
-# Effects:
-#   - Tests whether a sidecar marker identifies a managed copied file.
-# Inputs:
-#   - $1: marker file path.
-#   - $2: marker identifier.
-# Outputs:
-#   - Exit status 0 when managed; 1 otherwise.
+# Check a sidecar file for the expected repository ownership marker.
+# Arg: $1 - Path of marker file.
+# Arg: $2 - Expected first-line identifier.
+# Behavior: Returns 0 for matching marker and 1 otherwise.
 marker_is_managed() {
   local marker_file="$1"
   local marker_id="$2"
@@ -159,20 +107,11 @@ marker_is_managed() {
   [[ "$first_line" == "$marker_id" ]]
 }
 
-# configure_stow_component
-# Requires:
-#   - GNU Stow is installed and available on PATH.
-#   - $2 names a Stow package directory in the repository.
-# Modifies:
-#   - Symlinks beneath HOME unless dry-run is enabled.
-# Effects:
-#   - Installs, restows, or deletes one Stow package.
-# Inputs:
-#   - $1: action: install, reinstall, or uninstall.
-#   - $2: package/component name.
-#   - $3: dry-run flag: true or false.
-# Outputs:
-#   - Status and GNU Stow output.
+# Install, restow, or remove a GNU Stow component.
+# Arg: $1 - Action (install/reinstall/uninstall).
+# Arg: $2 - Stow package name.
+# Arg: $3 - Dry-run flag (true/false).
+# Behavior: Returns Stow's status, 66 if package missing, or 69 if Stow unavailable. Force does not override Stow conflict checks.
 configure_stow_component() {
   local action="$1"
   local component="$2"
@@ -214,23 +153,15 @@ configure_stow_component() {
   stow "${args[@]}" "$component"
 }
 
-# configure_managed_copy
-# Requires:
-#   - $2 exists when installing or reinstalling.
-# Modifies:
-#   - $3 and its sidecar marker unless dry-run is enabled.
-# Effects:
-#   - Installs, reinstalls, or removes a copied configuration with ownership tracking.
-# Inputs:
-#   - $1: action.
-#   - $2: source file.
-#   - $3: target file.
-#   - $4: marker identifier.
-#   - $5: human-readable label.
-#   - $6: dry-run flag.
-#   - $7: force flag.
-# Outputs:
-#   - Status or safety errors.
+# Manage a copied settings file with a sidecar ownership marker.
+# Arg: $1 - Action.
+# Arg: $2 - Source path.
+# Arg: $3 - Destination path.
+# Arg: $4 - Ownership marker identifier.
+# Arg: $5 - Display label.
+# Arg: $6 - Dry-run flag.
+# Arg: $7 - Force flag.
+# Behavior: Refuses unmanaged destinations (73) unless forced on install/reinstall. Does not back up adopted files. Missing source returns 66.
 configure_managed_copy() {
   local action="$1"
   local source_file="$2"
@@ -297,19 +228,10 @@ configure_managed_copy() {
   printf '%s %s: %s\n' "${action^}ed" "$label" "$target_file"
 }
 
-# configure_vscode_extensions
-# Requires:
-#   - vscode/extensions.txt exists.
-#   - VS Code's code CLI is available unless dry-run is enabled.
-# Modifies:
-#   - Installed VS Code extensions unless dry-run is enabled.
-# Effects:
-#   - Installs, force-reinstalls, or removes extensions in the repository manifest.
-# Inputs:
-#   - $1: action.
-#   - $2: dry-run flag.
-# Outputs:
-#   - Extension status.
+# Install, force-reinstall, or remove listed VS Code extensions.
+# Arg: $1 - Action.
+# Arg: $2 - Dry-run flag.
+# Behavior: Reads vscode/extensions.txt. Uninstall removes listed extensions even when they existed before dotfiles. Returns 66 if the manifest is absent or 69 if the code CLI is required but missing.
 configure_vscode_extensions() {
   local action="$1"
   local dry_run="$2"
@@ -366,19 +288,11 @@ configure_vscode_extensions() {
   done < "$extensions_file"
 }
 
-# configure_vscode
-# Requires:
-#   - VS Code desktop use is not delegated to the Windows host.
-# Modifies:
-#   - VS Code user settings and extensions unless dry-run is enabled.
-# Effects:
-#   - Manages VS Code as one public setup component.
-# Inputs:
-#   - $1: action.
-#   - $2: dry-run flag.
-#   - $3: force flag.
-# Outputs:
-#   - Settings and extension status.
+# Manage native Linux VS Code settings and manifest extensions.
+# Arg: $1 - Action.
+# Arg: $2 - Dry-run flag.
+# Arg: $3 - Force flag.
+# Behavior: Uses XDG_CONFIG_HOME if set; otherwise HOME/.config.
 configure_vscode() {
   local action="$1"
   local dry_run="$2"
@@ -391,21 +305,13 @@ configure_vscode() {
   configure_vscode_extensions "$action" "$dry_run"
 }
 
-# run_component
-# Requires:
-#   - $2 is a known component.
-# Modifies:
-#   - The selected user configuration unless dry-run is enabled.
-# Effects:
-#   - Dispatches one public component to its internal setup implementation.
-# Inputs:
-#   - $1: action.
-#   - $2: component.
-#   - $3: dry-run flag.
-#   - $4: force flag.
-#   - $5: whether the request used "all".
-# Outputs:
-#   - Component status or availability messages.
+# Dispatch a Linux setup component with platform availability rules.
+# Arg: $1 - Action.
+# Arg: $2 - Component.
+# Arg: $3 - Dry-run flag.
+# Arg: $4 - Force flag.
+# Arg: $5 - True if the selection was --all.
+# Behavior: Under WSL, --all skips Windows-side VS Code; an explicit vscode request fails.
 run_component() {
   local action="$1"
   local component="$2"
@@ -446,20 +352,9 @@ run_component() {
   esac
 }
 
-# main
-# Requires:
-#   - Repository configuration files exist for selected components.
-#   - Required host applications are installed for non-dry-run component operations.
-# Modifies:
-#   - User configuration selected by the command unless dry-run is enabled.
-# Effects:
-#   - Provides the only Linux/WSL setup entry point for listing and managing dotfiles.
-# Inputs:
-#   - list, install, reinstall, or uninstall command.
-#   - --all or one or more component names for mutating commands.
-#   - Optional --dry-run and --force flags.
-# Outputs:
-#   - Setup status and safety errors.
+# Validate the Linux CLI and apply the requested components.
+# Arg: $@ - Command, selected components, and optional flags.
+# Behavior: Returns 64 for invalid usage, 66 for unknown components, or the component failure status. Requires a component or --all for mutations.
 main() {
   if [[ $# -eq 0 ]]; then
     usage
