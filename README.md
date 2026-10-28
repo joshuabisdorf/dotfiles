@@ -253,9 +253,23 @@ The C/C++ Themes extension labels the selected theme in the GUI as `Dark (Visual
 ```
 
 C/C++ formatting is defined in `vscode/.clang-format`: Google style, with
-pointer and reference alignment explicitly set to `Left`. VS Code uses
-`C_Cpp.clang_format_style: file`; the fallback style is `none` to avoid
-silently applying a different style when no configuration file is found.
+pointer and reference alignment explicitly set to `Left`. It sorts includes
+case-insensitively into separate blocks, in this order:
+
+1. Corresponding source header (automatically detected by matching basename);
+2. Project headers (double-quoted includes);
+3. Third-party headers (angle-bracket paths and known standalone libraries);
+4. Standard C and C++ library headers;
+5. Operating-system and platform headers.
+
+Header categories are regular-expression heuristics, not compiler include-path
+analysis. Adjust `IncludeCategories` in a project's own `.clang-format` if,
+for example, its third-party headers use nonstandard naming conventions or
+its own headers use angle brackets.
+
+VS Code uses `C_Cpp.clang_format_style: file` to prefer the closest project
+configuration, and `C_Cpp.clang_format_fallbackStyle: none` to avoid
+substituting a different inline style when no configuration can be discovered.
 
 The setup entry points treat VS Code as one component: settings,
 `.clang-format`, and extensions. They install a managed copy of
@@ -264,9 +278,11 @@ on Windows. On reinstall, the copy is refreshed; uninstall removes it only
 if its ownership marker matches.
 
 Clang-format locates the nearest `.clang-format` in the source file's
-directory or an ancestor. The home-level configuration therefore applies
-to projects located under your home directory. Projects outside it require
-their own `.clang-format` or an explicit formatter configuration.
+directory or an ancestor. Accordingly, a project's `.clang-format`
+overrides the managed home-directory backup, which is discovered for projects
+under `$HOME` (or `%USERPROFILE%` on Windows). For projects outside the home
+directory, clang-format **cannot** automatically fall back to this home file.
+Those projects must have their own config or be given an explicit formatter path.
 
 Settings use the normal user locations:
 

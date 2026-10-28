@@ -31,7 +31,7 @@ jobs:
       - name: Install test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --yes shellcheck stow vim
+          sudo apt-get install --yes shellcheck stow vim clang-format
 
       - name: Validate Bash syntax
         run: |
@@ -64,6 +64,51 @@ jobs:
         run: |
           python3 -m json.tool vscode/settings.json >/dev/null
           python3 -m json.tool windows-terminal/settings.json >/dev/null
+
+      - name: Verify clang-format include ordering
+        shell: bash
+        run: |
+          test_home="$(mktemp -d)"
+          cp vscode/.clang-format "$test_home/.clang-format"
+
+          mkdir -p "$test_home/project"
+          cat > "$test_home/project/widget.cpp" <<'EOF'
+          #include <unistd.h>
+          #include <vector>
+          #include "Beta.h"
+          #include <fmt/format.h>
+          #include "widget.h"
+          #include <algorithm>
+          #include "alpha.h"
+          #include <sys/types.h>
+          #include <boost/asio.hpp>
+          EOF
+
+          clang-format -i "$test_home/project/widget.cpp"
+
+          cat > "$test_home/expected.cpp" <<'EOF'
+          #include "widget.h"
+
+          #include "alpha.h"
+          #include "Beta.h"
+
+          #include <boost/asio.hpp>
+          #include <fmt/format.h>
+
+          #include <algorithm>
+          #include <vector>
+
+          #include <sys/types.h>
+          #include <unistd.h>
+          EOF
+
+          diff -u "$test_home/expected.cpp" "$test_home/project/widget.cpp"
+
+          # A project-specific configuration takes precedence over the home fallback.
+          printf 'BasedOnStyle: Google\\nSortIncludes: Never\\n' > "$test_home/project/.clang-format"
+          printf '#include "z.h"\\n#include "a.h"\\n' > "$test_home/project/override.cpp"
+          output="$(clang-format "$test_home/project/override.cpp")"
+          test "$output" = "$(printf '#include "z.h"\\n#include "a.h"')"
 
       - name: Verify Linux setup interface
         shell: bash
