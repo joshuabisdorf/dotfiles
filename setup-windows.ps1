@@ -7,6 +7,7 @@ $script:Force = $false
 $script:All = $false
 $script:GitMarker = "joshuabisdorf/dotfiles:git-config"
 $script:VSCodeMarker = "joshuabisdorf/dotfiles:vscode-settings"
+$script:ClangFormatMarker = "joshuabisdorf/dotfiles:clang-format"
 $script:TerminalMarker = "joshuabisdorf/dotfiles:windows-terminal-settings"
 $script:PowerShellMarker = "# Managed by joshuabisdorf/dotfiles: powershell-profile"
 $script:Components = @("git", "powershell", "vscode", "terminal")
@@ -367,7 +368,7 @@ function Invoke-VSCodeExtensions {
 .SYNOPSIS
     Manage Windows VS Code user settings and extensions.
 .DESCRIPTION
-    Settings are copied and tracked with a marker; extensions are managed using the code CLI.
+    Settings and the home-directory .clang-format are copied with ownership markers; extensions use the code CLI.
 .PARAMETER Action
     Install, reinstall, or uninstall VS Code configuration.
 #>
@@ -381,6 +382,11 @@ function Invoke-VSCodeSetup {
     $source = Join-Path $script:RepoDir "vscode\settings.json"
     $target = Join-Path $env:APPDATA "Code\User\settings.json"
     Set-ManagedCopy -Action $Action -Source $source -Target $target -MarkerId $script:VSCodeMarker -Label "VS Code settings"
+
+    $clangFormatSource = Join-Path $script:RepoDir "vscode\.clang-format"
+    $clangFormatTarget = Join-Path $HOME ".clang-format"
+    Set-ManagedCopy -Action $Action -Source $clangFormatSource -Target $clangFormatTarget -MarkerId $script:ClangFormatMarker -Label "clang-format configuration"
+
     Invoke-VSCodeExtensions -Action $Action
 }
 

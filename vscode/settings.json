@@ -21,7 +21,8 @@
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "C_Cpp.formatting": "clangFormat",
-  "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, DerivePointerAlignment: false, PointerAlignment: Left, ReferenceAlignment: Left }",
+  "C_Cpp.clang_format_style": "file",
+  "C_Cpp.clang_format_fallbackStyle": "none",
   "[markdown]": {
     "files.trimTrailingWhitespace": false
   },
