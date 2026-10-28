@@ -35,6 +35,7 @@ jobs:
 
       - name: Validate Bash syntax
         run: |
+          test -x setup-linux.sh
           bash -n setup-linux.sh
           bash -n bash/.bashrc
 
