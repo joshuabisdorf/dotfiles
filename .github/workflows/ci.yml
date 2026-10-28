@@ -98,6 +98,7 @@ jobs:
           test ! -e "$HOME/.inputrc"
           test ! -e "$HOME/.vimrc"
           test ! -e "$XDG_CONFIG_HOME/Code/User/settings.json"
+          test ! -e "$HOME/.clang-format"
 
       - name: Verify Stow install reinstall and uninstall
         shell: bash

@@ -241,8 +241,9 @@ VS Code configuration lives in:
 
 ```text
 vscode/
-├── settings.json
-└── extensions.txt
+├── .clang-format
+├── extensions.txt
+└── settings.json
 ```
 
 The C/C++ Themes extension labels the selected theme in the GUI as `Dark (Visual Studio - C/C++)`. VS Code stores that selection in `settings.json` as:
@@ -251,14 +252,28 @@ The C/C++ Themes extension labels the selected theme in the GUI as `Dark (Visual
 "workbench.colorTheme": "Visual Studio Dark - C++"
 ```
 
-The setup entry points treat VS Code as one component: user settings plus extensions.
+C/C++ formatting is defined in `vscode/.clang-format`: Google style, with
+pointer and reference alignment explicitly set to `Left`. VS Code uses
+`C_Cpp.clang_format_style: file`; the fallback style is `none` to avoid
+silently applying a different style when no configuration file is found.
+
+The setup entry points treat VS Code as one component: settings,
+`.clang-format`, and extensions. They install a managed copy of
+`vscode/.clang-format` at `~/.clang-format` on Linux or `$HOME\.clang-format`
+on Windows. On reinstall, the copy is refreshed; uninstall removes it only
+if its ownership marker matches.
+
+Clang-format locates the nearest `.clang-format` in the source file's
+directory or an ancestor. The home-level configuration therefore applies
+to projects located under your home directory. Projects outside it require
+their own `.clang-format` or an explicit formatter configuration.
 
 Settings use the normal user locations:
 
 - Linux: `~/.config/Code/User/settings.json` unless `XDG_CONFIG_HOME` overrides it;
 - Windows: `%APPDATA%\Code\User\settings.json`.
 
-Copied settings are accompanied by a small ownership marker. Unmanaged existing settings are not overwritten unless force is explicitly requested.
+Copied VS Code settings and `.clang-format` each have an ownership marker. Unmanaged existing files are not overwritten unless force is explicitly requested.
 
 ## PowerShell
 

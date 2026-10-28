@@ -4,6 +4,7 @@ set -euo pipefail
 REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_DIR
 readonly VSCODE_MARKER='joshuabisdorf/dotfiles:vscode-settings'
+readonly CLANG_FORMAT_MARKER='joshuabisdorf/dotfiles:clang-format'
 readonly -a STOW_COMPONENTS=(git bash readline vim)
 readonly -a COMPONENTS=(git bash readline vim vscode)
 
@@ -292,7 +293,7 @@ configure_vscode_extensions() {
 # Arg: $1 - Action.
 # Arg: $2 - Dry-run flag.
 # Arg: $3 - Force flag.
-# Behavior: Uses XDG_CONFIG_HOME if set; otherwise HOME/.config.
+# Behavior: Uses XDG_CONFIG_HOME for settings and installs .clang-format in HOME.
 configure_vscode() {
   local action="$1"
   local dry_run="$2"
@@ -300,7 +301,13 @@ configure_vscode() {
   local config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
   local target_file="$config_home/Code/User/settings.json"
 
-  configure_managed_copy     "$action"     "$REPO_DIR/vscode/settings.json"     "$target_file"     "$VSCODE_MARKER"     'VS Code settings'     "$dry_run"     "$force"
+  configure_managed_copy \
+    "$action" "$REPO_DIR/vscode/settings.json" "$target_file" \
+    "$VSCODE_MARKER" 'VS Code settings' "$dry_run" "$force"
+
+  configure_managed_copy \
+    "$action" "$REPO_DIR/vscode/.clang-format" "$HOME/.clang-format" \
+    "$CLANG_FORMAT_MARKER" 'clang-format configuration' "$dry_run" "$force"
 
   configure_vscode_extensions "$action" "$dry_run"
 }

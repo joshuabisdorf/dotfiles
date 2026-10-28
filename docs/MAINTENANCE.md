@@ -13,14 +13,21 @@ defaults, see the [README](../README.md).
 | Linux / WSL | `readline` | `~/.inputrc` | GNU Stow symlink |
 | Linux / WSL | `vim` | `~/.vimrc` | GNU Stow symlink |
 | Native Linux | `vscode` settings | `${XDG_CONFIG_HOME:-$HOME/.config}/Code/User/settings.json` | Managed copy and sidecar |
+| Native Linux | `vscode` clang-format | `~/.clang-format` | Managed copy and sidecar |
 | Windows | `git` | `$HOME/.gitconfig` | Managed copy and sidecar |
 | Windows | `powershell` | `$PROFILE.CurrentUserAllHosts` | Managed dot-sourcing shim |
 | Windows | `vscode` settings | `$env:APPDATA\Code\User\settings.json` | Managed copy and sidecar |
+| Windows | `vscode` clang-format | `$HOME\.clang-format` | Managed copy and sidecar |
 | Windows | `terminal` | Windows Terminal user `settings.json` | Managed copy and sidecar |
 
 The Windows Terminal settings path is selected from the existing packaged or
 unpackaged user-data directory, preferring the packaged directory. The setup
 script uses a packaged path by default if neither exists.
+
+The managed `.clang-format` uses the home directory as its installation
+location. It applies to source files in projects beneath that directory
+unless a closer project `.clang-format` overrides it. Files outside the
+home directory require a local configuration file or an explicit path.
 
 VS Code extension IDs come from `vscode/extensions.txt` on both supported
 desktop platforms. They are installed or removed using the `code` CLI, **not**
