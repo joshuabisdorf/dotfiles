@@ -105,10 +105,23 @@ jobs:
           diff -u "$test_home/expected.cpp" "$test_home/project/widget.cpp"
 
           # A project-specific configuration takes precedence over the home fallback.
-          printf 'BasedOnStyle: Google\\nSortIncludes: Never\\n' > "$test_home/project/.clang-format"
-          printf '#include "z.h"\\n#include "a.h"\\n' > "$test_home/project/override.cpp"
-          output="$(clang-format "$test_home/project/override.cpp")"
-          test "$output" = "$(printf '#include "z.h"\\n#include "a.h"')"
+          cat > "$test_home/project/.clang-format" <<'EOF'
+          BasedOnStyle: Google
+          SortIncludes: Never
+          EOF
+
+          cat > "$test_home/project/override.cpp" <<'EOF'
+          #include "z.h"
+          #include "a.h"
+          EOF
+
+          cat > "$test_home/expected-override.cpp" <<'EOF'
+          #include "z.h"
+          #include "a.h"
+          EOF
+
+          clang-format -i "$test_home/project/override.cpp"
+          diff -u "$test_home/expected-override.cpp" "$test_home/project/override.cpp"
 
       - name: Verify Linux setup interface
         shell: bash
