@@ -7,6 +7,7 @@ $script:Force = $false
 $script:All = $false
 $script:GitMarker = "joshuabisdorf/dotfiles:git-config"
 $script:VSCodeMarker = "joshuabisdorf/dotfiles:vscode-settings"
+$script:VSCodeKeybindingsMarker = "joshuabisdorf/dotfiles:vscode-keybindings"
 $script:ClangFormatMarker = "joshuabisdorf/dotfiles:clang-format"
 $script:TerminalMarker = "joshuabisdorf/dotfiles:windows-terminal-settings"
 $script:PowerShellMarker = "# Managed by joshuabisdorf/dotfiles: powershell-profile"
@@ -368,7 +369,7 @@ function Invoke-VSCodeExtensions {
 .SYNOPSIS
     Manage Windows VS Code user settings and extensions.
 .DESCRIPTION
-    Settings and the home-directory .clang-format are copied with ownership markers; extensions use the code CLI.
+    Settings, keyboard shortcuts, and the home-directory .clang-format are copied with ownership markers; extensions use the code CLI.
 .PARAMETER Action
     Install, reinstall, or uninstall VS Code configuration.
 #>
@@ -382,6 +383,10 @@ function Invoke-VSCodeSetup {
     $source = Join-Path $script:RepoDir "vscode\settings.json"
     $target = Join-Path $env:APPDATA "Code\User\settings.json"
     Set-ManagedCopy -Action $Action -Source $source -Target $target -MarkerId $script:VSCodeMarker -Label "VS Code settings"
+
+    $keybindingsSource = Join-Path $script:RepoDir "vscode\keybindings.json"
+    $keybindingsTarget = Join-Path $env:APPDATA "Code\User\keybindings.json"
+    Set-ManagedCopy -Action $Action -Source $keybindingsSource -Target $keybindingsTarget -MarkerId $script:VSCodeKeybindingsMarker -Label "VS Code keyboard shortcuts"
 
     $clangFormatSource = Join-Path $script:RepoDir "vscode\.clang-format"
     $clangFormatTarget = Join-Path $HOME ".clang-format"
