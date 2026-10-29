@@ -7,6 +7,7 @@
   "workbench.browser.showInTitleBar": false,
   "workbench.layoutControl.enabled": false,
   "workbench.editor.enablePreview": false,
+  "explorer.autoReveal": false,
   "editor.detectIndentation": false,
   "editor.insertSpaces": true,
   "editor.tabSize": 2,

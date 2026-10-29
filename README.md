@@ -243,8 +243,13 @@ VS Code configuration lives in:
 vscode/
 ├── .clang-format
 ├── extensions.txt
+├── keybindings.json
 └── settings.json
 ```
+
+VS Code does not automatically reveal the active editor in the Explorer
+(`explorer.autoReveal: false`). Press `Ctrl+Shift+R` to reveal the active file
+on demand via `vscode/keybindings.json`.
 
 The C/C++ Themes extension labels the selected theme in the GUI as `Dark (Visual Studio - C/C++)`. VS Code stores that selection in `settings.json` as:
 
@@ -272,7 +277,7 @@ configuration, and `C_Cpp.clang_format_fallbackStyle: none` to avoid
 substituting a different inline style when no configuration can be discovered.
 
 The setup entry points treat VS Code as one component: settings,
-`.clang-format`, and extensions. They install a managed copy of
+keyboard shortcuts, `.clang-format`, and extensions. They install a managed copy of
 `vscode/.clang-format` at `~/.clang-format` on Linux or `$HOME\.clang-format`
 on Windows. On reinstall, the copy is refreshed; uninstall removes it only
 if its ownership marker matches.
@@ -284,12 +289,14 @@ under `$HOME` (or `%USERPROFILE%` on Windows). For projects outside the home
 directory, clang-format **cannot** automatically fall back to this home file.
 Those projects must have their own config or be given an explicit formatter path.
 
-Settings use the normal user locations:
+Settings and keyboard shortcuts use the normal VS Code user locations:
 
-- Linux: `~/.config/Code/User/settings.json` unless `XDG_CONFIG_HOME` overrides it;
-- Windows: `%APPDATA%\Code\User\settings.json`.
+- Linux: `~/.config/Code/User/` unless `XDG_CONFIG_HOME` overrides it;
+- Windows: `%APPDATA%\Code\User\`.
 
-Copied VS Code settings and `.clang-format` each have an ownership marker. Unmanaged existing files are not overwritten unless force is explicitly requested.
+The setup scripts copy both `settings.json` and `keybindings.json` to these
+directories. Copied VS Code settings, keyboard shortcuts, and `.clang-format`
+each have an ownership marker. Unmanaged existing files are not overwritten unless force is explicitly requested.
 
 ## PowerShell
 
