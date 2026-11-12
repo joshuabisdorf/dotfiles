@@ -244,7 +244,10 @@ vscode/
 ├── .clang-format
 ├── extensions.txt
 ├── keybindings.json
-└── settings.json
+├── settings.json
+└── examples/
+    └── python-devcontainer/
+        └── settings.json
 ```
 
 VS Code does not automatically reveal the active editor in the Explorer
@@ -297,6 +300,43 @@ Settings and keyboard shortcuts use the normal VS Code user locations:
 The setup scripts copy both `settings.json` and `keybindings.json` to these
 directories. Copied VS Code settings, keyboard shortcuts, and `.clang-format`
 each have an ownership marker. Unmanaged existing files are not overwritten unless force is explicitly requested.
+
+### Python development
+
+The VS Code extension manifest installs Microsoft's Python, Python Debugger,
+Pylance, Python Environments, and Black Formatter extensions. User settings enable
+basic Pylance type checking, auto-import suggestions, open-file diagnostics, and
+Black formatting on save. The bundled Black formatter does not require fetching
+the Python `black` package separately after the extension is installed.
+
+The default Python environment manager remains the extension's built-in `venv`
+default. `python-envs.alwaysUseUv` is disabled to avoid automatically routing
+environment operations through uv; terminal environment activation uses commands
+rather than modifying shell startup files.
+
+#### Air-gapped Python Dev Containers
+
+Copy `vscode/examples/python-devcontainer/settings.json` to the target project's
+`.vscode/settings.json`. Adjust `python.defaultInterpreterPath` for the
+interpreter **inside the container**; the example assumes
+`/usr/local/bin/python`. The example contains only workspace-supported settings:
+the Python Environment extension's `alwaysUseUv` and
+`terminal.autoActivationType` settings are user-scoped.
+
+A workspace settings file does **not** install extensions, Python dependencies,
+or the VS Code Server. Prepare the container image and all Python dependencies
+offline; make the compatible VS Code Server and extension VSIX packages available
+ahead of time. Once connected, use `Extensions: Install from VSIX...` to install
+required extensions in the **Dev Container**, not just on the local Windows host.
+Marketplace-based installs in `devcontainer.json` need network access unless
+the required extensions are already available.
+
+To avoid extension update attempts on an isolated VS Code installation, set
+`"extensions.autoUpdate": "off"` and
+`"extensions.autoCheckUpdates": false` in the appropriate **User or Remote
+Settings**, rather than the project's `.vscode/settings.json`. These are
+application settings, and the latest VS Code releases use `"off"` rather than
+`false` for `extensions.autoUpdate`.
 
 ## PowerShell
 

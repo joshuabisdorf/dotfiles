@@ -65,6 +65,7 @@ jobs:
         run: |
           python3 -m json.tool vscode/settings.json >/dev/null
           python3 -m json.tool vscode/keybindings.json >/dev/null
+          python3 -m json.tool vscode/examples/python-devcontainer/settings.json >/dev/null
           python3 -m json.tool windows-terminal/settings.json >/dev/null
 
       - name: Verify clang-format include ordering
@@ -381,6 +382,7 @@ jobs:
         run: |
           Get-Content -Raw vscode/settings.json | ConvertFrom-Json | Out-Null
           Get-Content -Raw vscode/keybindings.json | ConvertFrom-Json | Out-Null
+          Get-Content -Raw vscode/examples/python-devcontainer/settings.json | ConvertFrom-Json | Out-Null
 
           $terminal = Get-Content -Raw windows-terminal/settings.json | ConvertFrom-Json
           $powerShellGuid = "{574e775e-4f2a-5b96-ac1e-a2962a402336}"

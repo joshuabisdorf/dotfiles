@@ -1,0 +1,18 @@
+{
+  "python.defaultInterpreterPath": "/usr/local/bin/python",
+  "python-envs.workspaceSearchPaths": [
+    "./**/.venv"
+  ],
+  "python.analysis.diagnosticMode": "workspace",
+  "python.analysis.exclude": [
+    "**/.venv/**",
+    "**/build/**",
+    "**/dist/**"
+  ],
+  "black-formatter.importStrategy": "useBundled",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file"
+  }
+}
