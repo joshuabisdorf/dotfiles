@@ -18,6 +18,17 @@
   "editor.stickyScroll.enabled": true,
   "editor.linkedEditing": true,
   "editor.formatOnSave": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python-envs.alwaysUseUv": false,
+  "python-envs.terminal.autoActivationType": "command",
+  "black-formatter.importStrategy": "useBundled",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file"
+  },
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,

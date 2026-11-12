@@ -4,3 +4,18 @@ ms-vscode.cpptools
 # Provides the GUI theme "Dark (Visual Studio - C/C++)".
 # VS Code stores that theme as "Visual Studio Dark - C++" in settings.json.
 ms-vscode.cpptools-themes
+
+# Python language and interpreter integration.
+ms-python.python
+
+# Python debugging using debugpy.
+ms-python.debugpy
+
+# Python IntelliSense and type analysis.
+ms-python.vscode-pylance
+
+# Python environment management.
+ms-python.vscode-python-envs
+
+# Python formatting with bundled Black (also works offline when installed).
+ms-python.black-formatter
