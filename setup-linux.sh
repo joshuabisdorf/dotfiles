@@ -53,11 +53,11 @@ list_components() {
   printf '%-12s %s\n' 'vim' 'Vim configuration (~/.vimrc via GNU Stow)'
 
   if is_wsl; then
-    printf '%-12s %s\n' 'vscode' 'VS Code desktop settings + extensions (Windows host only under WSL)'
+    printf '%-12s %s\n' 'vscode' 'VS Code desktop configuration (Windows host only under WSL)'
   elif command -v code >/dev/null 2>&1; then
-    printf '%-12s %s\n' 'vscode' 'VS Code user settings + extensions'
+    printf '%-12s %s\n' 'vscode' 'VS Code user configuration'
   else
-    printf '%-12s %s\n' 'vscode' 'VS Code user settings + extensions (code CLI not currently available)'
+    printf '%-12s %s\n' 'vscode' 'VS Code user configuration (code CLI not currently available)'
   fi
 
 }
@@ -230,67 +230,7 @@ configure_managed_copy() {
   printf '%s %s: %s\n' "${action^}ed" "$label" "$target_file"
 }
 
-# Install, force-reinstall, or remove listed VS Code extensions.
-# Arg: $1 - Action.
-# Arg: $2 - Dry-run flag.
-# Behavior: Reads vscode/extensions.txt. Uninstall removes listed extensions even when they existed before dotfiles. Returns 66 if the manifest is absent or 69 if the code CLI is required but missing.
-configure_vscode_extensions() {
-  local action="$1"
-  local dry_run="$2"
-  local extensions_file="$REPO_DIR/vscode/extensions.txt"
-
-  if [[ ! -r "$extensions_file" ]]; then
-    printf 'Error: VS Code extension manifest not found: %s\n' "$extensions_file" >&2
-    return 66
-  fi
-
-  if [[ "$dry_run" != "true" ]] && ! command -v code >/dev/null 2>&1; then
-    printf 'Error: VS Code CLI "code" is not available on PATH.\n' >&2
-    return 69
-  fi
-
-  local installed_extensions=''
-  if [[ "$dry_run" != "true" && "$action" == "uninstall" ]]; then
-    installed_extensions="$(code --list-extensions)"
-  fi
-
-  local extension
-  while IFS= read -r extension || [[ -n "$extension" ]]; do
-    extension="${extension%%#*}"
-    extension="${extension#"${extension%%[![:space:]]*}"}"
-    extension="${extension%"${extension##*[![:space:]]}"}"
-
-    if [[ -z "$extension" ]]; then
-      continue
-    fi
-
-    if [[ "$dry_run" == "true" ]]; then
-      printf 'Would %s VS Code extension %s.\n' "$action" "$extension"
-      continue
-    fi
-
-    case "$action" in
-      install)
-        printf 'Installing VS Code extension %s...\n' "$extension"
-        code --install-extension "$extension"
-        ;;
-      reinstall)
-        printf 'Reinstalling VS Code extension %s...\n' "$extension"
-        code --install-extension "$extension" --force
-        ;;
-      uninstall)
-        if grep -Fxiq -- "$extension" <<< "$installed_extensions"; then
-          printf 'Uninstalling VS Code extension %s...\n' "$extension"
-          code --uninstall-extension "$extension"
-        else
-          printf 'VS Code extension %s is not installed; skipping.\n' "$extension"
-        fi
-        ;;
-    esac
-  done < "$extensions_file"
-}
-
-# Manage native Linux VS Code settings and manifest extensions.
+# Manage native Linux VS Code settings and keyboard shortcuts.
 # Arg: $1 - Action.
 # Arg: $2 - Dry-run flag.
 # Arg: $3 - Force flag.
@@ -314,7 +254,6 @@ configure_vscode() {
     "$action" "$REPO_DIR/vscode/.clang-format" "$HOME/.clang-format" \
     "$CLANG_FORMAT_MARKER" 'clang-format configuration' "$dry_run" "$force"
 
-  configure_vscode_extensions "$action" "$dry_run"
 }
 
 # Dispatch a Linux setup component with platform availability rules.
@@ -345,17 +284,6 @@ run_component() {
         fi
 
         printf 'Error: vscode desktop configuration is managed from Windows when running under WSL.\n' >&2
-        return 69
-      fi
-
-      if [[ "$dry_run" != "true" && "$action" != "uninstall" ]] &&
-         ! command -v code >/dev/null 2>&1; then
-        if [[ "$selected_all" == "true" ]]; then
-          printf 'Skipping vscode because the code CLI is unavailable.\n'
-          return 0
-        fi
-
-        printf 'Error: VS Code CLI "code" is not available on PATH.\n' >&2
         return 69
       fi
 

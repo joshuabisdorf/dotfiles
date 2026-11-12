@@ -53,13 +53,12 @@ Run ".\setup-windows.ps1 list" to see components.
 #>
 function Show-Components {
     $gitAvailability = if (Get-Command git -ErrorAction SilentlyContinue) { "" } else { " (git is not currently available)" }
-    $vscodeAvailability = if (Get-Command code -ErrorAction SilentlyContinue) { "" } else { " (code CLI not currently available)" }
     $terminalAvailability = if (Get-Command wt.exe -ErrorAction SilentlyContinue) { "" } else { " (Windows Terminal not currently available)" }
 
     "{0,-12} {1}" -f "COMPONENT", "DESCRIPTION"
     "{0,-12} {1}" -f "git", "Git user configuration (~/.gitconfig)$gitAvailability"
     "{0,-12} {1}" -f "powershell", "PowerShell 7 Current User/All Hosts profile"
-    "{0,-12} {1}" -f "vscode", "VS Code user settings + extensions$vscodeAvailability"
+    "{0,-12} {1}" -f "vscode", "VS Code user configuration"
     "{0,-12} {1}" -f "terminal", "Windows Terminal settings$terminalAvailability"
 }
 
@@ -290,86 +289,9 @@ function Invoke-PowerShellSetup {
 
 <#
 .SYNOPSIS
-    Apply VS Code extension actions from the manifest.
+    Manage Windows VS Code user settings and keyboard shortcuts.
 .DESCRIPTION
-    Uninstall removes listed extensions even if they were previously installed outside dotfiles.
-.PARAMETER Action
-    Install, reinstall, or uninstall listed extensions.
-#>
-function Invoke-VSCodeExtensions {
-    param(
-        [Parameter(Mandatory)]
-        [ValidateSet("install", "reinstall", "uninstall")]
-        [string]$Action
-    )
-
-    $extensionsFile = Join-Path $script:RepoDir "vscode\extensions.txt"
-
-    if (-not (Test-Path -LiteralPath $extensionsFile -PathType Leaf)) {
-        throw "VS Code extension manifest not found: $extensionsFile"
-    }
-
-    if (-not $script:DryRun -and -not (Get-Command code -ErrorAction SilentlyContinue)) {
-        if ($Action -eq "uninstall") {
-            Write-Host 'VS Code CLI "code" is unavailable; skipping extension removal.'
-            return
-        }
-
-        throw 'VS Code CLI "code" is not available on PATH.'
-    }
-
-    $installedExtensions = @()
-    if (-not $script:DryRun -and $Action -eq "uninstall") {
-        $installedExtensions = @(code --list-extensions)
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to list installed VS Code extensions."
-        }
-    }
-
-    Get-Content -LiteralPath $extensionsFile | ForEach-Object {
-        $extension = ($_ -split '#', 2)[0].Trim()
-
-        if (-not $extension) {
-            return
-        }
-
-        if ($script:DryRun) {
-            Write-Host "Would $Action VS Code extension $extension."
-            return
-        }
-
-        switch ($Action) {
-            "install" {
-                Write-Host "Installing VS Code extension $extension..."
-                code --install-extension $extension
-            }
-            "reinstall" {
-                Write-Host "Reinstalling VS Code extension $extension..."
-                code --install-extension $extension --force
-            }
-            "uninstall" {
-                if ($installedExtensions -contains $extension) {
-                    Write-Host "Uninstalling VS Code extension $extension..."
-                    code --uninstall-extension $extension
-                }
-                else {
-                    Write-Host "VS Code extension $extension is not installed; skipping."
-                    return
-                }
-            }
-        }
-
-        if ($LASTEXITCODE -ne 0) {
-            throw "VS Code extension operation failed: $extension"
-        }
-    }
-}
-
-<#
-.SYNOPSIS
-    Manage Windows VS Code user settings and extensions.
-.DESCRIPTION
-    Settings, keyboard shortcuts, and the home-directory .clang-format are copied with ownership markers; extensions use the code CLI.
+    Settings, keyboard shortcuts, and the home-directory .clang-format are copied with ownership markers.
 .PARAMETER Action
     Install, reinstall, or uninstall VS Code configuration.
 #>
@@ -392,7 +314,6 @@ function Invoke-VSCodeSetup {
     $clangFormatTarget = Join-Path $HOME ".clang-format"
     Set-ManagedCopy -Action $Action -Source $clangFormatSource -Target $clangFormatTarget -MarkerId $script:ClangFormatMarker -Label "clang-format configuration"
 
-    Invoke-VSCodeExtensions -Action $Action
 }
 
 <#
@@ -473,15 +394,6 @@ function Invoke-Component {
             Invoke-PowerShellSetup -Action $Action
         }
         "vscode" {
-            if (-not $script:DryRun -and $Action -ne "uninstall" -and -not (Get-Command code -ErrorAction SilentlyContinue)) {
-                if ($SelectedAll) {
-                    Write-Host 'Skipping vscode because the code CLI is unavailable.'
-                    return
-                }
-
-                throw 'VS Code CLI "code" is not available on PATH.'
-            }
-
             Invoke-VSCodeSetup -Action $Action
         }
         "terminal" {

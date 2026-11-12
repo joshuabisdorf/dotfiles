@@ -98,7 +98,7 @@ Available Linux components are:
 - `bash`: interactive Bash configuration through GNU Stow;
 - `readline`: Readline key bindings through GNU Stow;
 - `vim`: Vim configuration through GNU Stow;
-- `vscode`: VS Code settings and extensions on desktop Linux.
+- `vscode`: VS Code settings, keyboard shortcuts, and clang-format on desktop Linux.
 
 Use `--all` to select every Linux component. It is a selector flag, not a component name.
 
@@ -148,7 +148,7 @@ Available Windows components are:
 
 - `git`: shared Git user configuration;
 - `powershell`: PowerShell 7 Current User/All Hosts profile;
-- `vscode`: VS Code settings and extensions;
+- `vscode`: VS Code settings, keyboard shortcuts, and clang-format;
 - `terminal`: Windows Terminal settings.
 
 Use `-All` to select every Windows component. `--all` is also accepted for symmetry with Linux. The selector is not a component name.
@@ -169,11 +169,9 @@ On Windows, Git, VS Code, and Windows Terminal configuration is copied into the 
 
 `uninstall` removes managed GNU Stow links, tracked copied settings, and the
 managed Windows PowerShell profile shim. It refuses to delete unrelated
-configuration. **VS Code extensions are different:** extensions are not
-individually ownership-tracked, so uninstalling the VS Code component also
-removes extensions listed in `vscode/extensions.txt`, even if you installed
-those extensions independently. Preview the operation and select only the
-components you want to remove.
+configuration. VS Code extensions are managed manually and are never installed
+or removed by the setup scripts. `vscode/extensions.txt` is an optional
+reference list only.
 
 A Stow package can fail to install when an unmanaged file already exists at
 the target path. Back up or move the conflicting file yourself and retry;
@@ -244,10 +242,7 @@ vscode/
 ├── .clang-format
 ├── extensions.txt
 ├── keybindings.json
-├── settings.json
-└── examples/
-    └── python-devcontainer/
-        └── settings.json
+└── settings.json
 ```
 
 VS Code does not automatically reveal the active editor in the Explorer
@@ -280,7 +275,7 @@ configuration, and `C_Cpp.clang_format_fallbackStyle: none` to avoid
 substituting a different inline style when no configuration can be discovered.
 
 The setup entry points treat VS Code as one component: settings,
-keyboard shortcuts, `.clang-format`, and extensions. They install a managed copy of
+keyboard shortcuts, and `.clang-format`. They install a managed copy of
 `vscode/.clang-format` at `~/.clang-format` on Linux or `$HOME\.clang-format`
 on Windows. On reinstall, the copy is refreshed; uninstall removes it only
 if its ownership marker matches.
@@ -303,8 +298,8 @@ each have an ownership marker. Unmanaged existing files are not overwritten unle
 
 ### Python development
 
-The VS Code extension manifest installs Microsoft's Python, Python Debugger,
-Pylance, Python Environments, and Black Formatter extensions. User settings enable
+The optional `vscode/extensions.txt` file lists extensions for manual installation;
+the setup scripts never install, update, or uninstall them. User settings enable
 basic Pylance type checking, auto-import suggestions, open-file diagnostics, and
 Black formatting on save. The bundled Black formatter does not require fetching
 the Python `black` package separately after the extension is installed.
@@ -313,30 +308,6 @@ The default Python environment manager remains the extension's built-in `venv`
 default. `python-envs.alwaysUseUv` is disabled to avoid automatically routing
 environment operations through uv; terminal environment activation uses commands
 rather than modifying shell startup files.
-
-#### Air-gapped Python Dev Containers
-
-Copy `vscode/examples/python-devcontainer/settings.json` to the target project's
-`.vscode/settings.json`. Adjust `python.defaultInterpreterPath` for the
-interpreter **inside the container**; the example assumes
-`/usr/local/bin/python`. The example contains only workspace-supported settings:
-the Python Environment extension's `alwaysUseUv` and
-`terminal.autoActivationType` settings are user-scoped.
-
-A workspace settings file does **not** install extensions, Python dependencies,
-or the VS Code Server. Prepare the container image and all Python dependencies
-offline; make the compatible VS Code Server and extension VSIX packages available
-ahead of time. Once connected, use `Extensions: Install from VSIX...` to install
-required extensions in the **Dev Container**, not just on the local Windows host.
-Marketplace-based installs in `devcontainer.json` need network access unless
-the required extensions are already available.
-
-To avoid extension update attempts on an isolated VS Code installation, set
-`"extensions.autoUpdate": "off"` and
-`"extensions.autoCheckUpdates": false` in the appropriate **User or Remote
-Settings**, rather than the project's `.vscode/settings.json`. These are
-application settings, and the latest VS Code releases use `"off"` rather than
-`false` for `extensions.autoUpdate`.
 
 ## PowerShell
 
@@ -417,7 +388,7 @@ Linux/WSL prerequisites for the core Stow-managed configuration:
 - GNU Stow
 - Vim, if using the `vim` component
 
-The optional Linux `vscode` component requires VS Code and its `code` CLI.
+The optional Linux `vscode` component manages user configuration files without invoking the VS Code CLI.
 
 Windows setup requires PowerShell 7. Git, VS Code, and Windows Terminal should be installed for their respective components.
 
