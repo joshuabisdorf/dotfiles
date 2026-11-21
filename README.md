@@ -170,8 +170,7 @@ On Windows, Git, VS Code, and Windows Terminal configuration is copied into the 
 `uninstall` removes managed GNU Stow links, tracked copied settings, and the
 managed Windows PowerShell profile shim. It refuses to delete unrelated
 configuration. VS Code extensions are managed manually and are never installed
-or removed by the setup scripts. `vscode/extensions.txt` is an optional
-reference list only.
+or removed by the setup scripts.
 
 A Stow package can fail to install when an unmanaged file already exists at
 the target path. Back up or move the conflicting file yourself and retry;
@@ -240,10 +239,12 @@ VS Code configuration lives in:
 ```text
 vscode/
 ├── .clang-format
-├── extensions.txt
 ├── keybindings.json
 └── settings.json
 ```
+
+`settings.json` groups related settings with full-line `//` comments, which
+VS Code supports. Other JSON configuration files remain strict JSON.
 
 VS Code does not automatically reveal the active editor in the Explorer
 (`explorer.autoReveal: false`). Press `Ctrl+Shift+R` to reveal the active file
@@ -298,16 +299,40 @@ each have an ownership marker. Unmanaged existing files are not overwritten unle
 
 ### Python development
 
-The optional `vscode/extensions.txt` file lists extensions for manual installation;
-the setup scripts never install, update, or uninstall them. User settings enable
-basic Pylance type checking, auto-import suggestions, open-file diagnostics, and
-Black formatting on save. The bundled Black formatter does not require fetching
+Install the Python, Pylance, and Black Formatter extensions manually to use the
+configured Python tooling. User settings enable basic Pylance type checking,
+auto-import suggestions, open-file diagnostics, four-space indentation, and
+Black formatting on save. The Python Debugger extension defaults to stepping
+through application code; project `launch.json` files can override that choice.
+The bundled Black formatter does not require fetching
 the Python `black` package separately after the extension is installed.
 
 The default Python environment manager remains the extension's built-in `venv`
 default. `python-envs.alwaysUseUv` is disabled to avoid automatically routing
 environment operations through uv; terminal environment activation uses commands
 rather than modifying shell startup files.
+
+### Shell development
+
+Install Bash IDE and ShellCheck manually. Bash IDE provides language features
+and formats shell files with `shfmt`; install that executable on `PATH` in the
+environment where the extension runs, including WSL or a development container.
+Shell files use two spaces and LF line endings. Project `.editorconfig` files
+can guide shfmt formatting, and shell dialect detection remains automatic.
+
+The dedicated ShellCheck extension provides diagnostics while typing and quick
+fixes. Bash IDE's separate ShellCheck integration is disabled to avoid duplicate
+diagnostics. Keep project-specific rule choices in `.shellcheckrc`.
+
+### Markdown and development containers
+
+Markdown uses visual word wrapping and preserves trailing spaces. Automatic
+formatting on save is disabled to preserve prose layout. VS Code asks before
+updating links when linked files or directories move.
+
+Dev Containers copies the host Git configuration and has no global automatic
+extension list. Configure each project's image, tools, ports, user, and any
+container-specific extensions in `.devcontainer/devcontainer.json`.
 
 ## PowerShell
 
@@ -424,7 +449,7 @@ scripts and run their dry runs before performing live installation.
 
 CI validates both public setup entry points.
 
-Linux validation covers Bash syntax, ShellCheck, Git and Vim configuration, strict JSON settings, component listing, dry runs, Stow install/reinstall/uninstall behavior, and Bash defaults.
+Linux validation covers Bash syntax, ShellCheck, Git and Vim configuration, commented VS Code settings and strict JSON configuration, component listing, dry runs, Stow install/reinstall/uninstall behavior, and Bash defaults.
 
 Windows validation parses PowerShell, validates JSON settings, checks the component interface, tests profile/prompt behavior and terminal defaults, exercises the Windows all-components dry run, and verifies that obsolete component installer scripts are absent.
 

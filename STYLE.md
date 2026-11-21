@@ -65,10 +65,12 @@ None'. Do not add nonportable syntax to make comments look uniform.
 
 - **Git INI, Readline, Vim:** explain policy choices or machine-local override
   entry points with the format's native comment syntax.
-- **JSON:** keep application settings strict JSON; document them in the README
-  rather than introducing unsupported comments.
-- **Extension manifests:** keep one extension ID per line, with explanatory
-  comment lines beginning with `#`.
+- **VS Code settings:** use two-space indentation, blank lines between related
+  sections, and full-line `//` comments explaining choices or extension
+  requirements. Avoid trailing commas and inline or block comments so both
+  platform CI checks can validate the file.
+- **Other JSON:** keep strict JSON; document choices in the README rather than
+  introducing unsupported comments.
 - **GitHub Actions:** retain explicit permissions, minimal privileges, and
   pinned third-party action commit SHAs.
 

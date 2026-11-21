@@ -1,46 +1,142 @@
 {
+  // Window and workbench
+  // Show repository, branch, modified-file status, file path, and remote context.
   "window.title": "${activeRepositoryName}${separator}${activeRepositoryBranchName}${separator}${dirty}${activeEditorMedium}${separator}${remoteName}",
   "window.commandCenter": false,
+  // Requires the Microsoft C/C++ Themes extension.
   "workbench.colorTheme": "Visual Studio Dark - C++",
   "workbench.sideBar.location": "right",
   "workbench.startupEditor": "none",
   "workbench.browser.showInTitleBar": false,
   "workbench.layoutControl.enabled": false,
+
+  // Navigation
+  // Keep opened files in persistent tabs instead of reusing a preview tab.
   "workbench.editor.enablePreview": false,
+  // Reveal the active file manually with Ctrl+Shift+R (see keybindings.json).
   "explorer.autoReveal": false,
+
+  // Editor
+  // Default to two spaces; language overrides below define other conventions.
   "editor.detectIndentation": false,
   "editor.insertSpaces": true,
   "editor.tabSize": 2,
-  "editor.rulers": [
-    80
-  ],
+  // The ruler is a visual guide; it does not wrap or limit line length.
+  "editor.rulers": [80],
   "editor.guides.bracketPairs": true,
   "editor.stickyScroll.enabled": true,
   "editor.linkedEditing": true,
+  // Use the formatter configured for the current language when saving.
   "editor.formatOnSave": true,
+
+  // File cleanup
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
+
+  // Dev Containers
+  // Keep container extension installation explicit in each project's config.
+  "dev.containers.defaultExtensions": [],
+  // Make the host Git configuration available inside development containers.
+  "dev.containers.copyGitConfig": true,
+  // Images, tools, ports, and container users belong in devcontainer.json.
+
+  // Python: analysis and environments
+  // Requires Python and Pylance. Limit live diagnostics to open files.
+  "python.languageServer": "Pylance",
   "python.analysis.typeCheckingMode": "basic",
   "python.analysis.autoImportCompletions": true,
   "python.analysis.diagnosticMode": "openFilesOnly",
+  // Discover conventional source layouts and index symbols for completions.
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.indexing": true,
+  // Keep uv opt-in and activate terminal environments through shell commands.
   "python-envs.alwaysUseUv": false,
   "python-envs.terminal.autoActivationType": "command",
+
+  // Python: formatting
+  // Use Black bundled with the Black Formatter extension.
   "black-formatter.importStrategy": "useBundled",
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.detectIndentation": false,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file"
   },
+
+  // Python Debugger
+  // Step through application code by default; launch.json can override this.
+  "debugpy.debugJustMyCode": true,
+  // Interpreter selection, test frameworks, and launch arguments are per project.
+
+  // C/C++: formatting
+  // Requires Microsoft C/C++. Prefer the nearest .clang-format configuration.
   "C_Cpp.formatting": "clangFormat",
   "C_Cpp.clang_format_style": "file",
+  // Leave formatting unchanged when no .clang-format can be found.
   "C_Cpp.clang_format_fallbackStyle": "none",
+  "[c]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools",
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file"
+  },
+  "[cpp]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools",
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file"
+  },
+  // Compiler paths, include paths, and language standards are per project.
+
+  // Bash IDE: language features and shfmt formatting
+  // Use the dedicated ShellCheck extension for linting to avoid duplicate reports.
+  "bashIde.shellcheckPath": "",
+  // Install shfmt on PATH in each host, WSL, or container environment you edit in.
+  "bashIde.shfmt.path": "shfmt",
+  "bashIde.shfmt.ignoreEditorconfig": false,
+  "bashIde.shfmt.languageDialect": "auto",
+  "[shellscript]": {
+    "editor.defaultFormatter": "mads-hartmann.bash-ide-vscode",
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file",
+    "files.eol": "\n"
+  },
+
+  // ShellCheck: diagnostics and fixes
+  // Let shebangs and project .shellcheckrc files select the shell and rule policy.
+  "shellcheck.enable": true,
+  "shellcheck.run": "onType",
+  "shellcheck.enableQuickFix": true,
+
+  // Markdown
+  // Ask before updating links when linked files or directories move.
+  "markdown.updateLinksOnFileMove.enabled": "prompt",
   "[markdown]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.wordWrap": "on",
+    // Preserve prose layout; no Markdown formatter is selected globally.
+    "editor.formatOnSave": false,
+    // Trailing spaces can represent explicit Markdown line breaks.
     "files.trimTrailingWhitespace": false
   },
+
+  // Extensions and Git
+  // Choose extensions manually instead of receiving workspace recommendations.
   "extensions.ignoreRecommendations": true,
+  // Fetch all Git remotes automatically; this does not merge their changes.
   "git.autofetch": "all",
+
+  // Privacy and title-bar controls
   "telemetry.telemetryLevel": "off",
+  // Hide these chat controls in the title bar.
   "chat.titleBar.openInAgentsWindow.enabled": false,
   "chat.titleBar.signIn.enabled": false
 }

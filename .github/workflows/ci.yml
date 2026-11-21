@@ -63,7 +63,17 @@ jobs:
 
       - name: Validate JSON settings
         run: |
-          python3 -m json.tool vscode/settings.json >/dev/null
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          # VS Code settings use full-line // comments; other JSON stays strict.
+          settings = Path("vscode/settings.json").read_text(encoding="utf-8")
+          json.loads("\n".join(
+              line for line in settings.splitlines()
+              if not line.lstrip().startswith("//")
+          ))
+          PY
           python3 -m json.tool vscode/keybindings.json >/dev/null
           python3 -m json.tool windows-terminal/settings.json >/dev/null
 

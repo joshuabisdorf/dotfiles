@@ -29,9 +29,8 @@ location. It applies to source files in projects beneath that directory
 unless a closer project `.clang-format` overrides it. Files outside the
 home directory require a local configuration file or an explicit path.
 
-VS Code extension IDs come from `vscode/extensions.txt` on both supported
-desktop platforms. They are installed or removed using the `code` CLI, **not**
-tracked using sidecars.
+VS Code extensions are managed manually through VS Code or the `code` CLI.
+The setup scripts do not install, update, or remove extensions.
 
 Under WSL, the Linux entry point manages the Unix-side Git, Bash, Readline, and
 Vim files; it does not manage Windows-side VS Code. Use the native Windows
